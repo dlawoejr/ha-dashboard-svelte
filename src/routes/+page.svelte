@@ -18,17 +18,6 @@
         const params = new URLSearchParams(window.location.search);
         let connectUrl = params.get("url");
         let connectToken = params.get("token");
-        const appName = params.get("name");
-
-        if (appName) {
-            const el = document.getElementById("manifest-link");
-            if (el) {
-                el.setAttribute(
-                    "href",
-                    `/manifest.json?name=${encodeURIComponent(appName)}`,
-                );
-            }
-        }
 
         if (connectUrl && connectToken) {
             // Save newly scanned credentials to local storage for PWA persistence
