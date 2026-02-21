@@ -11,16 +11,40 @@ export function createHAStore() {
     let currentToken = $state('');
     let ha = null; // Store HA api instance internally
 
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    let isReconnecting = false;
+    let reconnectTimeout = null;
+
     async function initConnection(url, token) {
         if (!url || !token) throw new Error('URL and Token are required');
 
         currentUrl = url;
         currentToken = token;
 
+        // Reset reconnect state on explicit fresh connection
+        if (!isReconnecting) {
+            reconnectAttempts = 0;
+            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        }
+
         ha = new HomeAssistantAPI(url, token);
 
         ha.onConnectionStatus = (status) => {
-            connectionStatus = status;
+            if (status === 'disconnected' || status === 'error') {
+                if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    attemptAutoReconnect();
+                } else {
+                    connectionStatus = status;
+                    isReconnecting = false;
+                }
+            } else {
+                connectionStatus = status;
+                if (status === 'connected') {
+                    reconnectAttempts = 0;
+                    isReconnecting = false;
+                }
+            }
         };
 
         try {
@@ -29,8 +53,29 @@ export function createHAStore() {
             await loadInitialData();
         } catch (err) {
             console.error('Connection failed:', err);
-            throw err;
+
+            // If it fails immediately during init, and we haven't maxed out
+            if (!isReconnecting && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                attemptAutoReconnect();
+            } else if (!isReconnecting) {
+                throw err;
+            }
         }
+    }
+
+    function attemptAutoReconnect() {
+        if (!currentUrl || !currentToken || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+
+        isReconnecting = true;
+        reconnectAttempts++;
+        connectionStatus = 'reconnecting';
+
+        console.log(`Auto-reconnecting... Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
+
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        reconnectTimeout = setTimeout(() => {
+            initConnection(currentUrl, currentToken).catch(err => console.error("Reconnect retry failed", err));
+        }, 2000); // Wait 2 seconds between attempts
     }
 
     async function loadInitialData() {

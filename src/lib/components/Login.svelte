@@ -25,10 +25,21 @@
         isConnecting = true;
         errorMessage = "";
 
+        // Clean up the URL just in case the user pasted the WebSocket address directly
+        // or a previous bug stored it that way
+        let cleanUrl = url;
+        if (cleanUrl.endsWith("/api/websocket")) {
+            cleanUrl = cleanUrl.replace("/api/websocket", "");
+        }
+        cleanUrl = cleanUrl
+            .replace("ws://", "http://")
+            .replace("wss://", "https://");
+
         try {
-            await haStore.initConnection(url, token);
-            localStorage.setItem("ha_url", url);
+            await haStore.initConnection(cleanUrl, token);
+            localStorage.setItem("ha_url", cleanUrl);
             localStorage.setItem("ha_token", token);
+            url = cleanUrl; // Update input field to show clean URL
         } catch (err) {
             errorMessage =
                 err instanceof Error

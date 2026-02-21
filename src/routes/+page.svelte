@@ -44,36 +44,7 @@
 
         isInitializing = false;
     });
-
-    async function handleVisibilityChange() {
-        if (
-            document.visibilityState === "visible" &&
-            haStore.connectionStatus !== "connected"
-        ) {
-            console.log(
-                "App returned to foreground. Attempting auto-reconnect...",
-            );
-            const connectUrl = localStorage.getItem("ha_url");
-            const connectToken = localStorage.getItem("ha_token");
-
-            if (connectUrl && connectToken) {
-                isInitializing = true;
-                try {
-                    await haStore.initConnection(connectUrl, connectToken);
-                } catch (err) {
-                    console.error(
-                        "Auto-reconnection on visibility change failed:",
-                        err,
-                    );
-                } finally {
-                    isInitializing = false;
-                }
-            }
-        }
-    }
 </script>
-
-<svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <div id="app">
     <header>
@@ -104,14 +75,16 @@
         </div>
     </header>
 
-    {#if isInitializing}
+    {#if isInitializing || haStore.connectionStatus === "reconnecting"}
         <div
             class="loading-screen glass-panel"
             style="margin: 2rem auto; max-width: 400px; text-align: center;"
         >
             <div class="spinner"></div>
             <p style="margin-top: 1rem; color: var(--text-dim);">
-                Connecting to Home Assistant...
+                {haStore.connectionStatus === "reconnecting"
+                    ? "Reconnecting to Home Assistant..."
+                    : "Connecting to Home Assistant..."}
             </p>
         </div>
     {:else if haStore.connectionStatus !== "connected"}
