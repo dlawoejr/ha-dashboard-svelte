@@ -4,16 +4,18 @@ export async function GET({ url }) {
     // 1. Try to get a specific name from the query parameters (e.g. ?name=Office)
     let appName = url.searchParams.get('name');
 
-    // 2. If no name in URL, decide a default based on the domain names
+    // 2. If no name in URL or browser strips it, extract the subdomain automatically
     if (!appName) {
         const host = url.hostname;
+        const parts = host.split('.');
+        const subdomain = parts[0];
 
-        if (host.includes('home')) {
-            appName = 'HA Home';
-        } else if (host.includes('office')) {
-            appName = 'HA Office';
+        // Capitalize the first letter (e.g. "home.abc.com" -> "Home")
+        if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
+            appName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
         } else {
-            appName = 'HA Dash'; // Fallback default
+            // Default app name if it's localhost or an IP address
+            appName = 'HA Dash';
         }
     }
 
