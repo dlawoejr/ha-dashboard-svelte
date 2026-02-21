@@ -71,6 +71,54 @@ export class HomeAssistantAPI {
         return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
     }
 
+    /**
+     * Send a real ping to HA server and wait for pong.
+     * Returns true if alive, false if dead (timeout or error).
+     * This catches zombie sockets that lie about readyState on Android.
+     */
+    ping(timeoutMs = 3000) {
+        return new Promise((resolve) => {
+            if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+                resolve(false);
+                return;
+            }
+
+            const id = this.idCounter++;
+            let timer = null;
+
+            // Set up a one-time listener for the pong response
+            const onPong = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.id === id && data.type === 'pong') {
+                        clearTimeout(timer);
+                        this.socket.removeEventListener('message', onPong);
+                        resolve(true);
+                    }
+                } catch (e) {
+                    // ignore parse errors
+                }
+            };
+
+            this.socket.addEventListener('message', onPong);
+
+            // Timeout: if no pong received, socket is dead
+            timer = setTimeout(() => {
+                this.socket?.removeEventListener('message', onPong);
+                resolve(false);
+            }, timeoutMs);
+
+            // Send ping
+            try {
+                this.socket.send(JSON.stringify({ id, type: 'ping' }));
+            } catch (e) {
+                clearTimeout(timer);
+                this.socket?.removeEventListener('message', onPong);
+                resolve(false);
+            }
+        });
+    }
+
     handleMessage(data, resolve, reject) {
         switch (data.type) {
             case 'auth_required':

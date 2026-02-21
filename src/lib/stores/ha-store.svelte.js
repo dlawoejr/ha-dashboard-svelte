@@ -104,26 +104,33 @@ export function createHAStore() {
      * Check socket health and trigger reconnect if needed.
      * Called by visibilitychange handler to detect "zombie" sockets
      * that Android doesn't properly fire onclose for.
+     * Uses active ping/pong to verify socket is truly alive.
      */
-    function checkAndReconnect() {
-        // Case 1: We think we're connected but the socket is actually dead (zombie socket)
-        if (ha && !ha.isConnected() && connectionStatus === 'connected') {
-            console.log('[HA] Zombie socket detected! Forcing reconnect...');
-            connectionStatus = 'reconnecting';
-            reconnectAttempts = 0;
-            reconnectScheduled = false;
-            isReconnecting = false; // Let initConnection treat this as a fresh attempt
+    async function checkAndReconnect() {
+        // Case 1: We think we're connected - verify with an active ping
+        if (ha && connectionStatus === 'connected') {
+            console.log('[HA] Verifying connection with ping...');
+            const isAlive = await ha.ping(3000);
 
-            // Disconnect the zombie socket cleanly
-            ha.disconnect();
-            ha = null;
+            if (!isAlive) {
+                console.log('[HA] Ping failed! Socket is dead. Forcing reconnect...');
+                connectionStatus = 'reconnecting';
+                reconnectAttempts = 0;
+                reconnectScheduled = false;
+                isReconnecting = false;
 
-            // Immediately try to reconnect using stored credentials
-            initConnection(currentUrl, currentToken).catch(err => {
-                console.error('[HA] Zombie reconnect failed:', err);
-                // If it fails, start the auto-reconnect loop
-                attemptAutoReconnect();
-            });
+                ha.disconnect();
+                ha = null;
+
+                try {
+                    await initConnection(currentUrl, currentToken);
+                } catch (err) {
+                    console.error('[HA] Reconnect after ping failure failed:', err);
+                    attemptAutoReconnect();
+                }
+            } else {
+                console.log('[HA] Ping OK - connection is alive');
+            }
             return;
         }
 
@@ -132,19 +139,23 @@ export function createHAStore() {
             console.log('[HA] Disconnected with stored credentials, attempting reconnect...');
             reconnectAttempts = 0;
             isReconnecting = false;
-            initConnection(currentUrl, currentToken).catch(err => {
+            try {
+                await initConnection(currentUrl, currentToken);
+            } catch (err) {
                 console.error('[HA] Reconnect from disconnected failed:', err);
                 attemptAutoReconnect();
-            });
+            }
             return;
         }
 
-        // Case 3: No HA instance but we have credentials in localStorage (cold start recovery)
+        // Case 3: No HA instance but we have credentials (cold start recovery)
         if (!ha && currentUrl && currentToken && connectionStatus !== 'reconnecting') {
             console.log('[HA] No active connection, attempting fresh connect...');
-            initConnection(currentUrl, currentToken).catch(err => {
+            try {
+                await initConnection(currentUrl, currentToken);
+            } catch (err) {
                 console.error('[HA] Fresh connect failed:', err);
-            });
+            }
         }
     }
 
