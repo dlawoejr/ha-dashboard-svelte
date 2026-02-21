@@ -15,6 +15,7 @@ export function createHAStore() {
     const MAX_RECONNECT_ATTEMPTS = 5;
     let isReconnecting = false;
     let reconnectTimeout = null;
+    let reconnectScheduled = false; // Guard against double-trigger
 
     async function initConnection(url, token) {
         if (!url || !token) throw new Error('URL and Token are required');
@@ -22,27 +23,40 @@ export function createHAStore() {
         currentUrl = url;
         currentToken = token;
 
-        // Reset reconnect state on explicit fresh connection
+        // Reset reconnect state on explicit fresh connection (user-initiated)
         if (!isReconnecting) {
             reconnectAttempts = 0;
-            if (reconnectTimeout) clearTimeout(reconnectTimeout);
+            if (reconnectTimeout) { clearTimeout(reconnectTimeout); reconnectTimeout = null; }
+            reconnectScheduled = false;
+        }
+
+        // Disconnect previous instance to prevent ghost callbacks
+        if (ha) {
+            ha.disconnect();
+            ha = null;
         }
 
         ha = new HomeAssistantAPI(url, token);
 
         ha.onConnectionStatus = (status) => {
-            if (status === 'disconnected' || status === 'error') {
-                if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                    attemptAutoReconnect();
-                } else {
-                    connectionStatus = status;
-                    isReconnecting = false;
+            // After ha-api.js fix, only 'disconnected' or 'connected'/'auth_failed' arrive here.
+            if (status === 'disconnected') {
+                // Only trigger reconnect if we were previously connected or already reconnecting
+                if (connectionStatus === 'connected' || connectionStatus === 'reconnecting') {
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS && !reconnectScheduled) {
+                        attemptAutoReconnect();
+                    } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                        connectionStatus = 'disconnected';
+                        isReconnecting = false;
+                        reconnectScheduled = false;
+                    }
                 }
             } else {
                 connectionStatus = status;
                 if (status === 'connected') {
                     reconnectAttempts = 0;
                     isReconnecting = false;
+                    reconnectScheduled = false;
                 }
             }
         };
@@ -54,9 +68,11 @@ export function createHAStore() {
         } catch (err) {
             console.error('Connection failed:', err);
 
-            // If it fails immediately during init, and we haven't maxed out
-            if (!isReconnecting && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            // If this was a reconnect attempt, schedule the next one
+            if (isReconnecting && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectScheduled = false; // Allow scheduling again
                 attemptAutoReconnect();
+                return; // Don't throw during reconnect
             } else if (!isReconnecting) {
                 throw err;
             }
@@ -64,18 +80,27 @@ export function createHAStore() {
     }
 
     function attemptAutoReconnect() {
-        if (!currentUrl || !currentToken || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+        if (!currentUrl || !currentToken) return;
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            connectionStatus = 'disconnected';
+            isReconnecting = false;
+            reconnectScheduled = false;
+            return;
+        }
+        if (reconnectScheduled) return; // Prevent double scheduling
 
         isReconnecting = true;
+        reconnectScheduled = true;
         reconnectAttempts++;
         connectionStatus = 'reconnecting';
 
         console.log(`Auto-reconnecting... Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
 
-        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        if (reconnectTimeout) { clearTimeout(reconnectTimeout); reconnectTimeout = null; }
         reconnectTimeout = setTimeout(() => {
-            initConnection(currentUrl, currentToken).catch(err => console.error("Reconnect retry failed", err));
-        }, 2000); // Wait 2 seconds between attempts
+            reconnectScheduled = false; // Allow next schedule after timer fires
+            initConnection(currentUrl, currentToken).catch(err => console.error("Reconnect retry failed:", err));
+        }, 2000);
     }
 
     async function loadInitialData() {

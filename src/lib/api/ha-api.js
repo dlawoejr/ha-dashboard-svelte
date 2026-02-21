@@ -14,7 +14,11 @@ export class HomeAssistantAPI {
 
     connect() {
         return new Promise((resolve, reject) => {
+            // Clean up any previous socket before creating a new one
+            this.disconnect();
+
             this.socket = new WebSocket(this.url);
+            let settled = false; // Guard against resolving/rejecting twice
 
             this.socket.onopen = () => {
                 console.log('WS Connection opened');
@@ -22,13 +26,18 @@ export class HomeAssistantAPI {
 
             this.socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                this.handleMessage(data, resolve, reject);
+                this.handleMessage(data,
+                    (val) => { if (!settled) { settled = true; resolve(val); } },
+                    (err) => { if (!settled) { settled = true; reject(err); } }
+                );
             };
 
             this.socket.onerror = (err) => {
                 console.error('WS Error:', err);
-                if (this.onConnectionStatus) this.onConnectionStatus('error');
-                reject(err);
+                // Do NOT call onConnectionStatus here.
+                // onerror is always followed by onclose, so we handle it there
+                // to prevent double-triggering reconnect.
+                if (!settled) { settled = true; reject(err); }
             };
 
             this.socket.onclose = () => {
@@ -36,6 +45,25 @@ export class HomeAssistantAPI {
                 if (this.onConnectionStatus) this.onConnectionStatus('disconnected');
             };
         });
+    }
+
+    disconnect() {
+        if (this.socket) {
+            // Detach all event handlers to prevent ghost callbacks
+            this.socket.onopen = null;
+            this.socket.onmessage = null;
+            this.socket.onerror = null;
+            this.socket.onclose = null;
+
+            if (this.socket.readyState === WebSocket.OPEN ||
+                this.socket.readyState === WebSocket.CONNECTING) {
+                this.socket.close();
+            }
+            this.socket = null;
+        }
+        // Clear any pending command callbacks
+        this.callbacks.clear();
+        this.idCounter = 1;
     }
 
     handleMessage(data, resolve, reject) {
