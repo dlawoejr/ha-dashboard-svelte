@@ -11,7 +11,9 @@
         haStore.entities.filter((e) => e.area_id === haStore.activeAreaId),
     );
 
-    onMount(() => {
+    let isInitializing = $state(true);
+
+    onMount(async () => {
         // Auto-connect if url and token are provided via query string (QR code scan)
         const params = new URLSearchParams(window.location.search);
         let connectUrl = params.get("url");
@@ -33,10 +35,14 @@
 
         if (connectUrl && connectToken) {
             // Attempt to connect immediately
-            haStore.initConnection(connectUrl, connectToken).catch((err) => {
+            try {
+                await haStore.initConnection(connectUrl, connectToken);
+            } catch (err) {
                 console.error("Auto connection failed:", err);
-            });
+            }
         }
+
+        isInitializing = false;
     });
 </script>
 
@@ -45,7 +51,9 @@
         <h1>HA Dashboard</h1>
         <div class="header-actions">
             {#if haStore.connectionStatus === "connected"}
-                <QRConnect />
+                <div class="desktop-only">
+                    <QRConnect />
+                </div>
             {/if}
             <div class="status-badge">
                 <span
@@ -67,7 +75,17 @@
         </div>
     </header>
 
-    {#if haStore.connectionStatus !== "connected"}
+    {#if isInitializing}
+        <div
+            class="loading-screen glass-panel"
+            style="margin: 2rem auto; max-width: 400px; text-align: center;"
+        >
+            <div class="spinner"></div>
+            <p style="margin-top: 1rem; color: var(--text-dim);">
+                Connecting to Home Assistant...
+            </p>
+        </div>
+    {:else if haStore.connectionStatus !== "connected"}
         <Login />
     {:else}
         <div id="main-layout">
