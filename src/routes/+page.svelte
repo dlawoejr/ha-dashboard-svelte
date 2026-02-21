@@ -44,7 +44,36 @@
 
         isInitializing = false;
     });
+
+    async function handleVisibilityChange() {
+        if (
+            document.visibilityState === "visible" &&
+            haStore.connectionStatus !== "connected"
+        ) {
+            console.log(
+                "App returned to foreground. Attempting auto-reconnect...",
+            );
+            const connectUrl = localStorage.getItem("ha_url");
+            const connectToken = localStorage.getItem("ha_token");
+
+            if (connectUrl && connectToken) {
+                isInitializing = true;
+                try {
+                    await haStore.initConnection(connectUrl, connectToken);
+                } catch (err) {
+                    console.error(
+                        "Auto-reconnection on visibility change failed:",
+                        err,
+                    );
+                } finally {
+                    isInitializing = false;
+                }
+            }
+        }
+    }
 </script>
+
+<svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <div id="app">
     <header>
