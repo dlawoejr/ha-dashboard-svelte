@@ -40,3 +40,17 @@
 6. **PWA 앱 이름 동적 생성 (Dynamic Manifest)**
    - 안드로이드 환경에서 설치 시 앱 이름이 고정되는 현상 돌파를 위해 정적 매니페스트(`static/manifest.json`) 파일 삭제.
    - SvelteKit 서버 라우트(`+server.js`) 및 `<svelte:head>` 주입 방식을 통해, 사용자가 접속한 도메인의 서브도메인을 추출하거나 직접 텍스트로 입력한 앱 이름(`?name=...`)을 실시간으로 Manifest에 반영하여 스마트폰 바탕화면에 각기 다른 이름(집/회사)으로 설치되도록 완벽 구현.
+7. **WebSocket 자동 재연결 (Auto-Reconnect) 구현**
+   - **문제**: 안드로이드 PWA에서 홈 화면으로 나갔다가 돌아오면 WebSocket이 끊어져 로그인 창이 뜨는 현상 발생.
+   - **원인 분석 과정**:
+     - 1차 시도: `visibilitychange` 이벤트로 화면 복귀 시 재접속 → 실패 (안드로이드가 `onclose` 이벤트를 즉시 발생시키지 않아 `connectionStatus`가 여전히 `connected`로 보임).
+     - 2차 시도: WebSocket `onclose` 이벤트에 직접 5회 재접속 루프 장착 → 실패 (`onerror` + `onclose` 이중 발사로 인한 경쟁상태(Race Condition) + 이전 죽은 소켓 미정리로 유령 콜백 충돌).
+     - 3차 시도: Race Condition 수정 (`reconnectScheduled` 가드 플래그 + `ha.disconnect()` 소켓 정리 메서드 추가) → 실패 (안드로이드 좀비 소켓이 `readyState === OPEN`이라고 거짓 보고하여 모든 수동 감지 실패).
+   - **최종 해결책 - 능동적 Ping/Pong 건강 검진**:
+     - `ha-api.js`에 `ping()` 메서드 추가: HA 서버에 `{type:'ping'}` 메시지를 실제로 전송하고 3초 내 `{type:'pong'}` 응답 수신 여부를 확인.
+     - `ha-store.svelte.js`에 `checkAndReconnect()` 함수 추가: 3가지 시나리오(좀비 소켓 / 알려진 단절 / 냉시작) 대응.
+     - `+page.svelte`에서 `<svelte:document onvisibilitychange />` 이벤트로 화면 복귀 시 `checkAndReconnect()` 호출.
+     - 초기 접속 시 최대 3회 재시도 로직 적용 (냉시작 안정성 강화).
+   - **부수 버그 수정**:
+     - 로그인 입력창에 `ws://...api/websocket` 주소가 노출되던 URL 오염 버그 수정 (`Login.svelte`에서 `ws://` → `http://` 정규화).
+     - `static/sw.js` 캐시 버전 `v1 → v2`로 변경하여 옛날 Vanilla JS 프로젝트의 잔여 캐시 강제 삭제 + WebSocket 요청 캐시 우회 처리.
