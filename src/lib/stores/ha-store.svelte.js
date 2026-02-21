@@ -7,10 +7,15 @@ export function createHAStore() {
     let entities = $state([]);
     let activeFloorId = $state(null);
     let activeAreaId = $state(null);
+    let currentUrl = $state('');
+    let currentToken = $state('');
     let ha = null; // Store HA api instance internally
 
     async function initConnection(url, token) {
         if (!url || !token) throw new Error('URL and Token are required');
+
+        currentUrl = url;
+        currentToken = token;
 
         ha = new HomeAssistantAPI(url, token);
 
@@ -116,6 +121,8 @@ export function createHAStore() {
         get entities() { return entities; },
         get activeFloorId() { return activeFloorId; },
         get activeAreaId() { return activeAreaId; },
+        get currentUrl() { return currentUrl; },
+        get currentToken() { return currentToken; },
         initConnection,
         selectFloor,
         selectArea,
