@@ -7,6 +7,8 @@
     let qrDataUrl = $state("");
     let appName = $state("HA Dash");
     let isGenerating = $state(false);
+    let connectUrlString = $state("");
+    let copySuccess = $state(false);
 
     async function generateQR() {
         if (!haStore.currentUrl || !haStore.currentToken) return;
@@ -20,8 +22,10 @@
             connectUrl.searchParams.set("name", appName.trim());
         }
 
+        connectUrlString = connectUrl.toString();
+
         try {
-            qrDataUrl = await QRCode.toDataURL(connectUrl.toString(), {
+            qrDataUrl = await QRCode.toDataURL(connectUrlString, {
                 width: 300,
                 margin: 2,
                 color: {
@@ -39,10 +43,25 @@
     function openModal() {
         showModal = true;
         qrDataUrl = ""; // Reset QR when opening
+        connectUrlString = "";
+        copySuccess = false;
     }
 
     function closeModal() {
         showModal = false;
+    }
+
+    async function copyLink() {
+        if (!connectUrlString) return;
+        try {
+            await navigator.clipboard.writeText(connectUrlString);
+            copySuccess = true;
+            setTimeout(() => {
+                copySuccess = false;
+            }, 2000);
+        } catch (err) {
+            console.error("Failed to copy link", err);
+        }
     }
 </script>
 
@@ -106,6 +125,37 @@
                             alt="Connection QR Code"
                             class="qr-image"
                         />
+                        <div class="action-buttons">
+                            <button
+                                class="action-btn copy-btn"
+                                onclick={copyLink}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <rect
+                                        x="9"
+                                        y="9"
+                                        width="13"
+                                        height="13"
+                                        rx="2"
+                                        ry="2"
+                                    ></rect>
+                                    <path
+                                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                                    ></path>
+                                </svg>
+                                {copySuccess ? "Copied!" : "Copy URL Link"}
+                            </button>
+                        </div>
                     </div>
                 {/if}
             </div>
@@ -269,5 +319,32 @@
             opacity: 1;
             transform: translateY(0);
         }
+    }
+
+    .action-buttons {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
     }
 </style>
