@@ -34,17 +34,42 @@
         }
 
         if (connectUrl && connectToken) {
-            // Attempt to connect immediately
-            try {
-                await haStore.initConnection(connectUrl, connectToken);
-            } catch (err) {
-                console.error("Auto connection failed:", err);
+            // Attempt to connect with up to 3 retries for cold start reliability
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    await haStore.initConnection(connectUrl, connectToken);
+                    break; // Success, stop retrying
+                } catch (err) {
+                    console.error(
+                        `[Mount] Connection attempt ${attempt}/3 failed:`,
+                        err,
+                    );
+                    if (attempt < 3) {
+                        await new Promise((r) => setTimeout(r, 1500)); // Wait before retry
+                    }
+                }
             }
         }
 
         isInitializing = false;
     });
+
+    /**
+     * Backup strategy for Android zombie sockets.
+     * When the page becomes visible again (user returns from background),
+     * actively check if the WebSocket is still alive.
+     */
+    function handleVisibilityChange() {
+        if (document.visibilityState === "visible") {
+            console.log(
+                "[Visibility] Page became visible, checking connection health...",
+            );
+            haStore.checkAndReconnect();
+        }
+    }
 </script>
+
+<svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <div id="app">
     <header>

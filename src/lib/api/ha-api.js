@@ -66,6 +66,11 @@ export class HomeAssistantAPI {
         this.idCounter = 1;
     }
 
+    /** Check if the WebSocket is truly alive (not a zombie socket) */
+    isConnected() {
+        return this.socket !== null && this.socket.readyState === WebSocket.OPEN;
+    }
+
     handleMessage(data, resolve, reject) {
         switch (data.type) {
             case 'auth_required':

@@ -1,11 +1,6 @@
-const CACHE_NAME = 'ha-dashboard-v1';
+const CACHE_NAME = 'ha-dashboard-v2';
 const ASSETS = [
     './',
-    './index.html',
-    './css/style.css',
-    './js/app.js',
-    './js/ha-api.js',
-    './manifest.json',
     './images/icon-192.png',
     './images/icon-512.png'
 ];
@@ -20,7 +15,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// Activate event
+// Activate event - clear old caches
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -33,8 +28,13 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch event (Network first)
+// Fetch event (Network first, fallback to cache)
 self.addEventListener('fetch', (event) => {
+    // Skip WebSocket requests and API calls
+    if (event.request.url.includes('/api/') || event.request.url.startsWith('ws')) {
+        return;
+    }
+
     event.respondWith(
         fetch(event.request).catch(() => {
             return caches.match(event.request);
