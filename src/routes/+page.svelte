@@ -14,18 +14,28 @@
     onMount(() => {
         // Auto-connect if url and token are provided via query string (QR code scan)
         const params = new URLSearchParams(window.location.search);
-        const qrUrl = params.get("url");
-        const qrToken = params.get("token");
+        let connectUrl = params.get("url");
+        let connectToken = params.get("token");
 
-        if (qrUrl && qrToken) {
-            // Attempt to connect immediately
-            haStore.initConnection(qrUrl, qrToken).catch((err) => {
-                console.error("Auto connection from QR failed:", err);
-            });
+        if (connectUrl && connectToken) {
+            // Save newly scanned credentials to local storage for PWA persistence
+            localStorage.setItem("ha_url", connectUrl);
+            localStorage.setItem("ha_token", connectToken);
 
             // Clean up the URL so the token is not visible in the address bar
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
+        } else {
+            // No URL params, try loading from local storage
+            connectUrl = localStorage.getItem("ha_url");
+            connectToken = localStorage.getItem("ha_token");
+        }
+
+        if (connectUrl && connectToken) {
+            // Attempt to connect immediately
+            haStore.initConnection(connectUrl, connectToken).catch((err) => {
+                console.error("Auto connection failed:", err);
+            });
         }
     });
 </script>

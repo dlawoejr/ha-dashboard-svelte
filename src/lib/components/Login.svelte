@@ -1,10 +1,20 @@
 <script>
+    import { onMount } from "svelte";
     import { haStore } from "../stores/ha-store.svelte.js";
 
-    let url = $state("http://localhost:8123");
+    let url = $state("");
     let token = $state("");
     let errorMessage = $state("");
     let isConnecting = $state(false);
+
+    onMount(() => {
+        const savedUrl = localStorage.getItem("ha_url");
+        if (savedUrl) {
+            url = savedUrl;
+        } else {
+            url = "http://localhost:8123";
+        }
+    });
 
     async function handleConnect() {
         if (!url || !token) {
@@ -17,9 +27,13 @@
 
         try {
             await haStore.initConnection(url, token);
+            localStorage.setItem("ha_url", url);
+            localStorage.setItem("ha_token", token);
         } catch (err) {
             errorMessage =
-                err.message || "Connection failed. Check console for details.";
+                err instanceof Error
+                    ? err.message
+                    : "Connection failed. Check console for details.";
         } finally {
             isConnecting = false;
         }
