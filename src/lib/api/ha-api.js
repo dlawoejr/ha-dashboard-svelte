@@ -17,11 +17,18 @@ export class HomeAssistantAPI {
             // Clean up any previous socket before creating a new one
             this.disconnect();
 
-            this.socket = new WebSocket(this.url);
+            try {
+                this.socket = new WebSocket(this.url);
+            } catch (err) {
+                return reject(err);
+            }
+
             let settled = false; // Guard against resolving/rejecting twice
+            let connectedOnce = false; // Track if we ever fully established connection
 
             this.socket.onopen = () => {
                 console.log('WS Connection opened');
+                connectedOnce = true;
             };
 
             this.socket.onmessage = (event) => {
@@ -35,14 +42,18 @@ export class HomeAssistantAPI {
             this.socket.onerror = (err) => {
                 console.error('WS Error:', err);
                 // Do NOT call onConnectionStatus here.
-                // onerror is always followed by onclose, so we handle it there
-                // to prevent double-triggering reconnect.
                 if (!settled) { settled = true; reject(err); }
             };
 
             this.socket.onclose = () => {
                 console.log('WS Connection closed');
-                if (this.onConnectionStatus) this.onConnectionStatus('disconnected');
+                // CRITICAL FIX: Only fire disconnected if this was a healthy, established socket that died.
+                // If it closes immediately during connect() (e.g. ERR_INTERNET_DISCONNECTED),
+                // we DO NOT want to broadcast 'disconnected' because the store's retry loop 
+                // is currently active and managing the 'reconnecting' state.
+                if (connectedOnce && this.onConnectionStatus) {
+                    this.onConnectionStatus('disconnected');
+                }
             };
         });
     }
