@@ -31,17 +31,21 @@ export function createHAStore() {
 
         // Status updates and automatic reconnect on drop
         ha.onConnectionStatus = (status) => {
+            console.warn(`[HA STORE] onConnectionStatus EVENT: ${status}. Current connectionStatus: ${connectionStatus}`);
             if (status === 'disconnected' && connectionStatus !== 'reconnecting') {
                 const hasCreds = currentUrl || localStorage.getItem('ha_url');
                 if (hasCreds) {
-                    console.log('[HA] Socket closed unexpectedly. Triggering auto-reconnect...');
+                    console.warn('[HA STORE] Socket closed unexpectedly while not reconnecting. Triggering auto-reconnect...');
                     // Fire and forget - reconnect() handles its own retries
                     reconnect().catch(e => console.error(e));
                 } else {
+                    console.warn('[HA STORE] Disconnected but no creds found. Setting status to disconnected.');
                     connectionStatus = status;
                 }
             } else if (status !== 'disconnected') {
                 connectionStatus = status;
+            } else {
+                console.warn(`[HA STORE] Status is disconnected but connectionStatus is currently ${connectionStatus}. Ignoring.`);
             }
         };
 
@@ -87,35 +91,40 @@ export function createHAStore() {
      * Protected by a lock to prevent concurrent reconnect loops.
      */
     async function reconnect() {
+        console.warn(`[HA STORE] reconnect() CALL STARTED. isReconnectingLock: ${isReconnectingLock}`);
         if (isReconnectingLock) {
-            console.log('[HA] Reconnect loop already running. Ignoring.');
+            console.warn('[HA STORE] Reconnect loop already running. Ignoring.');
             return;
         }
 
         const url = currentUrl || localStorage.getItem('ha_url');
         const token = currentToken || localStorage.getItem('ha_token');
 
-        if (!url || !token) return;
+        if (!url || !token) {
+            console.warn('[HA STORE] No URL or token found in reconnect(). Aborting.');
+            return;
+        }
 
         isReconnectingLock = true;
         connectionStatus = 'reconnecting';
+        console.warn('[HA STORE] isReconnectingLock SET TO TRUE. Starting while loop...');
 
         let attempt = 1;
 
         // Infinite retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
         while (isReconnectingLock) {
-            console.log(`[HA] Reconnect attempt ${attempt}...`);
+            console.warn(`[HA STORE] Loop iteration start. Attempt ${attempt}.`);
             connectionStatus = 'reconnecting'; // Protect state inside loop
             try {
                 await initConnection(url, token);
-                console.log('[HA] Reconnect successful!');
+                console.warn('[HA STORE] initConnection() SUCCEEDED inside reconnect loop!');
                 isReconnectingLock = false; // Break loop on success
                 return;
             } catch (err) {
-                console.error(`[HA] Attempt ${attempt} failed:`, err);
+                console.warn(`[HA STORE] initConnection() FAILED in attempt ${attempt}:`, err);
 
                 if (err.message === 'Auth failed') {
-                    console.error('[HA] Authentication rejected. Wiping credentials.');
+                    console.warn('[HA STORE] Authentication rejected. Wiping credentials & breaking loop.');
                     localStorage.removeItem('ha_token');
                     connectionStatus = 'auth_failed';
                     isReconnectingLock = false;
@@ -123,14 +132,19 @@ export function createHAStore() {
                 }
 
                 // Wait before retrying if lock is still active
-                if (!isReconnectingLock) return;
+                if (!isReconnectingLock) {
+                    console.warn('[HA STORE] isReconnectingLock turned false externally. Breaking loop.');
+                    return;
+                }
 
                 // Exponential backoff, max 5 seconds
                 const delayMs = Math.min(2000 * Math.pow(1.5, attempt - 1), 5000);
+                console.warn(`[HA STORE] Waiting ${delayMs}ms before next attempt...`);
                 await new Promise(r => setTimeout(r, delayMs));
                 attempt++;
             }
         }
+        console.warn('[HA STORE] reconnect() while loop exited natively.');
     }
 
     /**
