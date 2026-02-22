@@ -90,9 +90,22 @@
         const now = new Date().toISOString();
         if (document.visibilityState === "hidden") {
             console.log(
-                `[V11 TIMER] OS triggered background -> EVENT at ${now}`,
+                `[V12 TIMER] OS triggered background -> EVENT at ${now}`,
             );
             hiddenAt = Date.now();
+
+            // CRITICAL FIX: When going to background, ALWAYS cancel any in-progress
+            // reconnect and reset the recovery lock. This prevents the deadlock where
+            // a user briefly opens the app, triggers reconnect(), then backgrounds it again.
+            // Without this reset, isRecovering stays true forever and blocks the next foreground attempt.
+            if (isRecovering) {
+                console.log(
+                    `[V12 TIMER] Cancelling in-progress reconnect & resetting lock for next foreground event`,
+                );
+                haStore.cancelReconnect();
+                isRecovering = false;
+                isInitializing = false;
+            }
             return;
         }
 
