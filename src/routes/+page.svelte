@@ -73,6 +73,7 @@
     );
 
     let isInitializing = $state(true);
+    let isRecovering = false;
 
     onMount(async () => {
         // Auto-connect if url and token are provided via query string (QR code scan)
@@ -124,25 +125,40 @@
     async function handleVisibilityChange() {
         if (document.visibilityState !== "visible") return;
 
-        // Check 1: Are we genuinely connected?
-        if (haStore.connectionStatus === "connected") {
-            const isAlive = await haStore.verifyConnection();
-            if (isAlive) return; // All good, nothing to do
+        // Prevent competing reconnect loops if Android fires event multiple times
+        if (isRecovering) {
+            console.log(
+                "[Visibility] Recovery already in progress, ignoring duplicate event.",
+            );
+            return;
         }
 
-        // Check 2: We are disconnected, or the verifyConnection failed
-        const url = localStorage.getItem("ha_url");
-        const token = localStorage.getItem("ha_token");
-
-        if (!url || !token) return;
-
-        console.log("[Visibility] PWA returned to foreground. Need reconnect.");
-        isInitializing = true;
-
         try {
+            isRecovering = true;
+
+            // Check 1: Are we genuinely connected?
+            if (haStore.connectionStatus === "connected") {
+                const isAlive = await haStore.verifyConnection();
+                if (isAlive) return; // All good, nothing to do
+            }
+
+            // Check 2: We are disconnected, or the verifyConnection failed
+            const url = localStorage.getItem("ha_url");
+            const token = localStorage.getItem("ha_token");
+
+            if (!url || !token) return;
+
+            console.log(
+                "[Visibility] PWA returned to foreground. Need reconnect.",
+            );
+            isInitializing = true;
+
             await haStore.reconnect();
+        } catch (err) {
+            console.error("[Visibility] Reconnect flow failed:", err);
         } finally {
             isInitializing = false;
+            isRecovering = false;
         }
     }
 </script>
