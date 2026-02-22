@@ -10,6 +10,7 @@ export function createHAStore() {
     let currentUrl = $state('');
     let currentToken = $state('');
     let ha = null;
+    let isReconnectingLock = false;
 
     /**
      * Connect to Home Assistant.
@@ -74,37 +75,69 @@ export function createHAStore() {
     }
 
     /**
-     * Reconnect using stored credentials with multiple retries.
-     * Called by visibilitychange handler.
+     * Reconnect using stored credentials with infinite retries (exponential backoff).
+     * Protected by a lock to prevent concurrent reconnect loops.
      */
     async function reconnect() {
+        if (isReconnectingLock) {
+            console.log('[HA] Reconnect loop already running. Ignoring.');
+            return;
+        }
+
         const url = currentUrl || localStorage.getItem('ha_url');
         const token = currentToken || localStorage.getItem('ha_token');
 
         if (!url || !token) return;
 
+        isReconnectingLock = true;
         connectionStatus = 'reconnecting';
 
-        // Try up to 5 times. Android network takes a few seconds to wake up 
-        // after returning from the background.
-        for (let attempt = 1; attempt <= 5; attempt++) {
-            console.log(`[HA] Reconnect attempt ${attempt}/5...`);
+        let attempt = 1;
+
+        // Infinite retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
+        while (isReconnectingLock) {
+            console.log(`[HA] Reconnect attempt ${attempt}...`);
             try {
                 await initConnection(url, token);
                 console.log('[HA] Reconnect successful!');
-                return; // Break out of the loop on success
+                isReconnectingLock = false; // Break loop on success
+                return;
             } catch (err) {
                 console.error(`[HA] Attempt ${attempt} failed:`, err);
-                if (attempt < 5) {
-                    // Wait 2 seconds before next attempt to let OS network stabilize
-                    await new Promise(r => setTimeout(r, 2000));
+
+                if (err.message === 'Auth failed') {
+                    console.error('[HA] Authentication rejected. Wiping credentials.');
+                    localStorage.removeItem('ha_token');
+                    connectionStatus = 'auth_failed';
+                    isReconnectingLock = false;
+                    return;
                 }
+
+                // Wait before retrying if lock is still active
+                if (!isReconnectingLock) return;
+
+                // Exponential backoff, max 5 seconds
+                const delayMs = Math.min(2000 * Math.pow(1.5, attempt - 1), 5000);
+                await new Promise(r => setTimeout(r, delayMs));
+                attempt++;
             }
         }
+    }
 
-        // If all 5 attempts fail, we have no internet or the server is truly down
-        console.error('[HA] All reconnect attempts failed. Giving up.');
+    /**
+     * Allow user to manually abort an infinite reconnect loop.
+     */
+    function cancelReconnect() {
+        isReconnectingLock = false;
         connectionStatus = 'disconnected';
+        if (ha) {
+            ha.disconnect();
+            ha = null;
+        }
+        localStorage.removeItem('ha_url');
+        localStorage.removeItem('ha_token');
+        currentUrl = '';
+        currentToken = '';
     }
 
     async function loadInitialData() {
@@ -196,6 +229,7 @@ export function createHAStore() {
         initConnection,
         reconnect,
         verifyConnection,
+        cancelReconnect,
         selectFloor,
         selectArea,
         toggleEntity,

@@ -96,24 +96,13 @@
         }
 
         if (connectUrl && connectToken) {
-            // Attempt to connect with up to 3 retries for cold start reliability
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    await haStore.initConnection(connectUrl, connectToken);
-                    break; // Success, stop retrying
-                } catch (err) {
-                    console.error(
-                        `[Mount] Connection attempt ${attempt}/3 failed:`,
-                        err,
-                    );
-                    if (attempt < 3) {
-                        await new Promise((r) => setTimeout(r, 1500)); // Wait before retry
-                    }
-                }
-            }
+            // Rely completely on the bulletproof infinite reconnect loop in the store
+            haStore.reconnect().finally(() => {
+                isInitializing = false;
+            });
+        } else {
+            isInitializing = false;
         }
-
-        isInitializing = false;
     });
 
     /**
@@ -197,7 +186,7 @@
     {#if isInitializing || haStore.connectionStatus === "reconnecting"}
         <div
             class="loading-screen glass-panel"
-            style="margin: 2rem auto; max-width: 400px; text-align: center;"
+            style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem;"
         >
             <div class="spinner"></div>
             <p style="margin-top: 1rem; color: var(--text-dim);">
@@ -205,6 +194,15 @@
                     ? "Reconnecting to Home Assistant..."
                     : "Connecting to Home Assistant..."}
             </p>
+            {#if haStore.connectionStatus === "reconnecting" || !isInitializing}
+                <button
+                    class="btn secondary"
+                    style="margin-top: 2rem; width: 100%;"
+                    onclick={() => haStore.cancelReconnect()}
+                >
+                    Cancel / Change Server
+                </button>
+            {/if}
         </div>
     {:else if haStore.connectionStatus !== "connected"}
         <Login />
