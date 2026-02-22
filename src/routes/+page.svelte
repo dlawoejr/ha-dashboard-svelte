@@ -113,18 +113,31 @@
 
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
-                // EXTREME OPTIMIZATION:
-                // If the app was hidden for more than 5 seconds, mobile OS almost certainly killed the socket.
-                // Doing a 3-second ping here would just waste 3 seconds of UX time. Skip it and reset.
-                if (hiddenAt > 0 && timeHiddenMs > 5000) {
+                // EXTREME OPTIMIZATION FOR MOBILE ONLY:
+                // Desktop browsers usually keep WebSockets alive in background tabs.
+                // Mobile OSs (Android/iOS) murder them mercilessly to save battery.
+                const isMobile =
+                    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                        navigator.userAgent,
+                    );
+
+                if (isMobile && hiddenAt > 0 && timeHiddenMs > 5000) {
                     console.warn(
-                        "[Visibility EVENT] Hidden for >5s. Bypassing ping check for instant reconnect!",
+                        "[Visibility EVENT] Mobile device hidden for >5s. Bypassing ping check for instant reconnect!",
                     );
                     // Force the store to consider it disconnected to trigger immediate reconnect logic below
                     haStore.forceDisconnectForFastRecovery();
                 } else {
+                    console.warn(
+                        "[Visibility EVENT] Desktop device or short hide. Running safe 3s ping check.",
+                    );
                     const isAlive = await haStore.verifyConnection();
-                    if (isAlive) return; // All good, nothing to do
+                    if (isAlive) {
+                        console.warn(
+                            "[Visibility EVENT] Socket is still alive! Resuming.",
+                        );
+                        return; // All good, nothing to do
+                    }
                 }
             }
 
@@ -203,7 +216,11 @@
                 <button
                     class="btn secondary"
                     style="margin-top: 2rem; width: 100%;"
-                    onclick={() => haStore.cancelReconnect()}
+                    onclick={() => {
+                        haStore.cancelReconnect();
+                        isInitializing = false;
+                        isRecovering = false;
+                    }}
                 >
                     Cancel / Change Server
                 </button>
