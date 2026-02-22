@@ -106,6 +106,25 @@
     });
 
     /**
+     * Browser native 'online' event.
+     * Fires immediately when OS network is restored or DevTools offline box is unchecked.
+     */
+    async function handleOnline() {
+        console.log("========================================");
+        console.log("[Network] BROWSER DETECTED ONLINE EVENT!");
+        console.log("========================================");
+
+        if (haStore.connectionStatus !== "connected") {
+            console.log(
+                "[Network] Status is not connected. Forcing reconnect loop.",
+            );
+            isInitializing = true;
+            await haStore.reconnect();
+            isInitializing = false;
+        }
+    }
+
+    /**
      * Recovery strategy for Android backgrounding.
      * When returning to foreground, we must:
      * 1. Verify if our "connected" state is a lie (zombie socket).
@@ -124,6 +143,9 @@
 
         try {
             isRecovering = true;
+            console.log("========================================");
+            console.log("[Visibility] TAB RETURNED TO FOREGROUND!");
+            console.log("========================================");
 
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
@@ -152,6 +174,7 @@
     }
 </script>
 
+<svelte:window ononline={handleOnline} />
 <svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <div id="app">
