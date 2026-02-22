@@ -9,10 +9,16 @@
 
     onMount(() => {
         const savedUrl = localStorage.getItem("ha_url");
+        const savedToken = localStorage.getItem("ha_token");
+
         if (savedUrl) {
             url = savedUrl;
         } else {
             url = "http://localhost:8123";
+        }
+
+        if (savedToken) {
+            token = savedToken;
         }
     });
 

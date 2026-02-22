@@ -149,6 +149,7 @@ export function createHAStore() {
 
     /**
      * Allow user to manually abort an infinite reconnect loop.
+     * Preserves localStorage so the login screen can pre-fill the inputs.
      */
     function cancelReconnect() {
         isReconnectingLock = false;
@@ -157,8 +158,6 @@ export function createHAStore() {
             ha.disconnect();
             ha = null;
         }
-        localStorage.removeItem('ha_url');
-        localStorage.removeItem('ha_token');
         currentUrl = '';
         currentToken = '';
     }
