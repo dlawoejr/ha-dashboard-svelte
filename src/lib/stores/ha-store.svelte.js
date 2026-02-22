@@ -54,7 +54,13 @@ export function createHAStore() {
 
         await ha.connect();
         await ha.subscribeEvents();
-        await loadInitialData();
+
+        // CRITICAL OPTIMIZATION: Do not await loadInitialData!
+        // The REST fetch for Floors/Areas/Entities takes ~700ms. 
+        // If we await it here, the UI loading screen is frozen for almost a full second.
+        // Instead, we let it fetch in the background. The store's $state variables 
+        // will automatically pop the UI into existence the exact millisecond the data arrives.
+        loadInitialData().catch(e => console.error(e));
     }
 
     /**
