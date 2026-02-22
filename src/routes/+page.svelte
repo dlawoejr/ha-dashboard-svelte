@@ -50,28 +50,15 @@
      * Fires immediately when OS network is restored or DevTools offline box is unchecked.
      */
     async function handleOnline() {
-        console.warn("========================================");
-        console.warn("[Network EVENT] BROWSER DETECTED window.ononline FIRED!");
-        console.warn("========================================");
-
         if (haStore.connectionStatus !== "connected") {
-            console.warn(
-                "[Network EVENT] Status is not connected. Forcing reconnect loop.",
-            );
             isInitializing = true;
             await haStore.reconnect();
             isInitializing = false;
-        } else {
-            console.warn(
-                "[Network EVENT] Status is already connected. Skipping reconnect.",
-            );
         }
     }
 
     async function handleOffline() {
-        console.warn("========================================");
-        console.warn("[Network EVENT] window.onoffline FIRED!");
-        console.warn("========================================");
+        // Handle offline state if necessary
     }
 
     /**
@@ -81,10 +68,6 @@
      * 2. Reconnect with retries if we are disconnected or zombie.
      */
     async function handleVisibilityChange() {
-        console.warn(
-            `[Visibility EVENT] document.visibilityState = ${document.visibilityState}`,
-        );
-
         if (document.visibilityState === "hidden") {
             hiddenAt = Date.now();
             return;
@@ -94,22 +77,12 @@
 
         // Prevent competing reconnect loops if Android fires event multiple times
         if (isRecovering) {
-            console.warn(
-                "[Visibility EVENT] Recovery already in progress, ignoring duplicate event.",
-            );
             return;
         }
 
         try {
             isRecovering = true;
-            console.warn("========================================");
-            console.warn("[Visibility EVENT] TAB RETURNED TO FOREGROUND!");
-            console.warn("========================================");
-
             const timeHiddenMs = Date.now() - hiddenAt;
-            console.warn(
-                `[Visibility EVENT] App was hidden for ${timeHiddenMs}ms`,
-            );
 
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
@@ -122,23 +95,18 @@
                     );
 
                 if (isMobile && hiddenAt > 0 && timeHiddenMs > 5000) {
-                    console.warn(
-                        "[Visibility EVENT] Mobile device hidden for >5s. Bypassing ping check for instant reconnect!",
-                    );
                     // Force the store to consider it disconnected to trigger immediate reconnect logic below
                     haStore.forceDisconnectForFastRecovery();
                 } else {
-                    console.warn(
-                        "[Visibility EVENT] Desktop device or short hide. Running safe 3s ping check.",
-                    );
                     const isAlive = await haStore.verifyConnection();
                     if (isAlive) {
-                        console.warn(
-                            "[Visibility EVENT] Socket is still alive! Resuming.",
-                        );
                         return; // All good, nothing to do
                     }
                 }
+            } else if (haStore.connectionStatus === "reconnecting") {
+                // Background reconnect loop might be sleeping in its 5s backoff.
+                // Cancel it so we can start a fresh, 0-delay instant connecting loop immediately.
+                haStore.cancelReconnect();
             }
 
             // Check 2: We are disconnected, or the verifyConnection failed
@@ -147,19 +115,13 @@
 
             if (!url || !token) return;
 
-            console.warn("[Visibility EVENT] Calling haStore.reconnect()...");
             isInitializing = true;
-
             await haStore.reconnect();
-            console.warn("[Visibility EVENT] haStore.reconnect() finished.");
         } catch (err) {
             console.error("[Visibility EVENT] Reconnect flow failed:", err);
         } finally {
             isInitializing = false;
             isRecovering = false;
-            console.warn(
-                "[Visibility EVENT] Flow complete. isRecovering set to false.",
-            );
         }
     }
 </script>

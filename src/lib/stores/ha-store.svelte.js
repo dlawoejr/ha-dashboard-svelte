@@ -11,6 +11,7 @@ export function createHAStore() {
     let currentToken = $state('');
     let ha = null;
     let isReconnectingLock = false;
+    let sleepResolver = null;
 
     /**
      * Connect to Home Assistant.
@@ -31,21 +32,23 @@ export function createHAStore() {
 
         // Status updates and automatic reconnect on drop
         ha.onConnectionStatus = (status) => {
-            console.warn(`[HA STORE] onConnectionStatus EVENT: ${status}. Current connectionStatus: ${connectionStatus}`);
             if (status === 'disconnected' && connectionStatus !== 'reconnecting') {
                 const hasCreds = currentUrl || localStorage.getItem('ha_url');
-                if (hasCreds) {
-                    console.warn('[HA STORE] Socket closed unexpectedly while not reconnecting. Triggering auto-reconnect...');
+
+                // CRITICAL OPTIMIZATION: Only start the infinite reconnect loop if the app is 
+                // actually visible on the screen. If it's hidden in the background, just accept 
+                // the death of the socket to save battery. The visibilitychange event in +page.svelte 
+                // will cleanly revive it when the user returns.
+                const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
+
+                if (hasCreds && isVisible) {
                     // Fire and forget - reconnect() handles its own retries
                     reconnect().catch(e => console.error(e));
                 } else {
-                    console.warn('[HA STORE] Disconnected but no creds found. Setting status to disconnected.');
                     connectionStatus = status;
                 }
             } else if (status !== 'disconnected') {
                 connectionStatus = status;
-            } else {
-                console.warn(`[HA STORE] Status is disconnected but connectionStatus is currently ${connectionStatus}. Ignoring.`);
             }
         };
 
@@ -61,17 +64,14 @@ export function createHAStore() {
     async function verifyConnection() {
         if (!ha || connectionStatus !== 'connected') return false;
 
-        console.log('[HA] Active ping to verify connection...');
         const originalHa = ha;
         const isAlive = await originalHa.ping(3000);
 
         if (ha !== originalHa) {
-            console.log('[HA] Socket instance changed during ping. Ignoring stale result.');
             return true;
         }
 
         if (!isAlive) {
-            console.warn('[HA] Ping timeout! Connection is dead.');
             if (ha === originalHa) {
                 ha.disconnect();
                 ha = null;
@@ -82,7 +82,6 @@ export function createHAStore() {
             return false;
         }
 
-        console.log('[HA] Ping OK. Connection is alive.');
         return true;
     }
 
@@ -91,9 +90,7 @@ export function createHAStore() {
      * Protected by a lock to prevent concurrent reconnect loops.
      */
     async function reconnect() {
-        console.warn(`[HA STORE] reconnect() CALL STARTED. isReconnectingLock: ${isReconnectingLock}`);
         if (isReconnectingLock) {
-            console.warn('[HA STORE] Reconnect loop already running. Ignoring.');
             return;
         }
 
@@ -101,30 +98,23 @@ export function createHAStore() {
         const token = currentToken || localStorage.getItem('ha_token');
 
         if (!url || !token) {
-            console.warn('[HA STORE] No URL or token found in reconnect(). Aborting.');
             return;
         }
 
         isReconnectingLock = true;
         connectionStatus = 'reconnecting';
-        console.warn('[HA STORE] isReconnectingLock SET TO TRUE. Starting while loop...');
 
         let attempt = 1;
 
         // Infinite retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
         while (isReconnectingLock) {
-            console.warn(`[HA STORE] Loop iteration start. Attempt ${attempt}.`);
             connectionStatus = 'reconnecting'; // Protect state inside loop
             try {
                 await initConnection(url, token);
-                console.warn('[HA STORE] initConnection() SUCCEEDED inside reconnect loop!');
                 isReconnectingLock = false; // Break loop on success
                 return;
             } catch (err) {
-                console.warn(`[HA STORE] initConnection() FAILED in attempt ${attempt}:`, err);
-
                 if (err.message === 'Auth failed') {
-                    console.warn('[HA STORE] Authentication rejected. Wiping credentials & breaking loop.');
                     localStorage.removeItem('ha_token');
                     connectionStatus = 'auth_failed';
                     isReconnectingLock = false;
@@ -133,18 +123,26 @@ export function createHAStore() {
 
                 // Wait before retrying if lock is still active
                 if (!isReconnectingLock) {
-                    console.warn('[HA STORE] isReconnectingLock turned false externally. Breaking loop.');
                     return;
                 }
 
-                // Exponential backoff, max 5 seconds
+                // Exponential backoff, max 5 seconds, interruptible via sleepResolver
                 const delayMs = Math.min(2000 * Math.pow(1.5, attempt - 1), 5000);
-                console.warn(`[HA STORE] Waiting ${delayMs}ms before next attempt...`);
-                await new Promise(r => setTimeout(r, delayMs));
+                await new Promise(resolve => {
+                    let timeout = setTimeout(() => {
+                        sleepResolver = null;
+                        resolve();
+                    }, delayMs);
+
+                    sleepResolver = () => {
+                        clearTimeout(timeout);
+                        sleepResolver = null;
+                        resolve(); // Instantly wake up the loop
+                    };
+                });
                 attempt++;
             }
         }
-        console.warn('[HA STORE] reconnect() while loop exited natively.');
     }
 
     /**
@@ -153,6 +151,12 @@ export function createHAStore() {
      */
     function cancelReconnect() {
         isReconnectingLock = false;
+
+        // Instantly wake any sleeping reconnect loop so it cleanly exits
+        if (sleepResolver) {
+            sleepResolver();
+        }
+
         connectionStatus = 'disconnected';
         if (ha) {
             ha.disconnect();
