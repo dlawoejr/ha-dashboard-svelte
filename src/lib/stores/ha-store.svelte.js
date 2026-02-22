@@ -11,26 +11,17 @@ export function createHAStore() {
     let currentToken = $state('');
     let ha = null;
 
-    let reconnectAttempts = 0;
-    const MAX_RECONNECT_ATTEMPTS = 5;
-    let isReconnecting = false;
-    let reconnectTimeout = null;
-    let reconnectScheduled = false;
-
+    /**
+     * Connect to Home Assistant.
+     * Pure connection logic only — no reconnect decisions here.
+     */
     async function initConnection(url, token) {
         if (!url || !token) throw new Error('URL and Token are required');
 
         currentUrl = url;
         currentToken = token;
 
-        // Reset reconnect state on explicit fresh connection (user-initiated)
-        if (!isReconnecting) {
-            reconnectAttempts = 0;
-            if (reconnectTimeout) { clearTimeout(reconnectTimeout); reconnectTimeout = null; }
-            reconnectScheduled = false;
-        }
-
-        // Disconnect previous instance to prevent ghost callbacks
+        // Always clean up previous connection first
         if (ha) {
             ha.disconnect();
             ha = null;
@@ -38,124 +29,33 @@ export function createHAStore() {
 
         ha = new HomeAssistantAPI(url, token);
 
+        // Simple status update only — NO reconnect logic here
         ha.onConnectionStatus = (status) => {
-            if (status === 'disconnected') {
-                // Socket closed - try to reconnect if we have credentials
-                if (currentUrl && currentToken && reconnectAttempts < MAX_RECONNECT_ATTEMPTS && !reconnectScheduled) {
-                    attemptAutoReconnect();
-                } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                    connectionStatus = 'disconnected';
-                    isReconnecting = false;
-                    reconnectScheduled = false;
-                }
-            } else {
-                connectionStatus = status;
-                if (status === 'connected') {
-                    reconnectAttempts = 0;
-                    isReconnecting = false;
-                    reconnectScheduled = false;
-                }
-            }
+            connectionStatus = status;
         };
 
-        try {
-            await ha.connect();
-            await ha.subscribeEvents();
-            await loadInitialData();
-        } catch (err) {
-            console.error('Connection failed:', err);
-
-            // If this was a reconnect attempt, schedule the next one
-            if (isReconnecting && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                reconnectScheduled = false;
-                attemptAutoReconnect();
-                return;
-            } else if (!isReconnecting) {
-                throw err;
-            }
-        }
-    }
-
-    function attemptAutoReconnect() {
-        if (!currentUrl || !currentToken) return;
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            connectionStatus = 'disconnected';
-            isReconnecting = false;
-            reconnectScheduled = false;
-            return;
-        }
-        if (reconnectScheduled) return;
-
-        isReconnecting = true;
-        reconnectScheduled = true;
-        reconnectAttempts++;
-        connectionStatus = 'reconnecting';
-
-        console.log(`[HA] Auto-reconnecting... Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
-
-        if (reconnectTimeout) { clearTimeout(reconnectTimeout); reconnectTimeout = null; }
-        reconnectTimeout = setTimeout(() => {
-            reconnectScheduled = false;
-            initConnection(currentUrl, currentToken).catch(err => console.error("[HA] Reconnect retry failed:", err));
-        }, 2000);
+        await ha.connect();
+        await ha.subscribeEvents();
+        await loadInitialData();
     }
 
     /**
-     * Check socket health and trigger reconnect if needed.
-     * Called by visibilitychange handler to detect "zombie" sockets
-     * that Android doesn't properly fire onclose for.
-     * Uses active ping/pong to verify socket is truly alive.
+     * Reconnect using stored credentials.
+     * Called by visibilitychange handler — the SOLE reconnect entry point.
      */
-    async function checkAndReconnect() {
-        // Case 1: We think we're connected - verify with an active ping
-        if (ha && connectionStatus === 'connected') {
-            console.log('[HA] Verifying connection with ping...');
-            const isAlive = await ha.ping(3000);
+    async function reconnect() {
+        const url = currentUrl || localStorage.getItem('ha_url');
+        const token = currentToken || localStorage.getItem('ha_token');
 
-            if (!isAlive) {
-                console.log('[HA] Ping failed! Socket is dead. Forcing reconnect...');
-                connectionStatus = 'reconnecting';
-                reconnectAttempts = 0;
-                reconnectScheduled = false;
-                isReconnecting = false;
+        if (!url || !token) return;
 
-                ha.disconnect();
-                ha = null;
+        connectionStatus = 'reconnecting';
 
-                try {
-                    await initConnection(currentUrl, currentToken);
-                } catch (err) {
-                    console.error('[HA] Reconnect after ping failure failed:', err);
-                    attemptAutoReconnect();
-                }
-            } else {
-                console.log('[HA] Ping OK - connection is alive');
-            }
-            return;
-        }
-
-        // Case 2: We know we're disconnected and have credentials - try reconnecting
-        if (connectionStatus === 'disconnected' && currentUrl && currentToken && !reconnectScheduled) {
-            console.log('[HA] Disconnected with stored credentials, attempting reconnect...');
-            reconnectAttempts = 0;
-            isReconnecting = false;
-            try {
-                await initConnection(currentUrl, currentToken);
-            } catch (err) {
-                console.error('[HA] Reconnect from disconnected failed:', err);
-                attemptAutoReconnect();
-            }
-            return;
-        }
-
-        // Case 3: No HA instance but we have credentials (cold start recovery)
-        if (!ha && currentUrl && currentToken && connectionStatus !== 'reconnecting') {
-            console.log('[HA] No active connection, attempting fresh connect...');
-            try {
-                await initConnection(currentUrl, currentToken);
-            } catch (err) {
-                console.error('[HA] Fresh connect failed:', err);
-            }
+        try {
+            await initConnection(url, token);
+        } catch (err) {
+            console.error('[HA] Reconnect failed:', err);
+            connectionStatus = 'disconnected';
         }
     }
 
@@ -246,7 +146,7 @@ export function createHAStore() {
         get currentUrl() { return currentUrl; },
         get currentToken() { return currentToken; },
         initConnection,
-        checkAndReconnect,
+        reconnect,
         selectFloor,
         selectArea,
         toggleEntity,

@@ -14,40 +14,25 @@
     let isInitializing = $state(true);
 
     onMount(async () => {
-        // Auto-connect if url and token are provided via query string (QR code scan)
         const params = new URLSearchParams(window.location.search);
         let connectUrl = params.get("url");
         let connectToken = params.get("token");
 
         if (connectUrl && connectToken) {
-            // Save newly scanned credentials to local storage for PWA persistence
             localStorage.setItem("ha_url", connectUrl);
             localStorage.setItem("ha_token", connectToken);
-
-            // Clean up the URL so the token is not visible in the address bar
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
         } else {
-            // No URL params, try loading from local storage
             connectUrl = localStorage.getItem("ha_url");
             connectToken = localStorage.getItem("ha_token");
         }
 
         if (connectUrl && connectToken) {
-            // Attempt to connect with up to 3 retries for cold start reliability
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    await haStore.initConnection(connectUrl, connectToken);
-                    break; // Success, stop retrying
-                } catch (err) {
-                    console.error(
-                        `[Mount] Connection attempt ${attempt}/3 failed:`,
-                        err,
-                    );
-                    if (attempt < 3) {
-                        await new Promise((r) => setTimeout(r, 1500)); // Wait before retry
-                    }
-                }
+            try {
+                await haStore.initConnection(connectUrl, connectToken);
+            } catch (err) {
+                console.error("[Mount] Connection failed:", err);
             }
         }
 
@@ -55,16 +40,29 @@
     });
 
     /**
-     * Backup strategy for Android zombie sockets.
-     * When the page becomes visible again (user returns from background),
-     * actively check if the WebSocket is still alive.
+     * SOLE reconnect entry point.
+     * When the PWA returns to foreground, check if disconnected and reconnect.
      */
-    function handleVisibilityChange() {
-        if (document.visibilityState === "visible") {
-            console.log(
-                "[Visibility] Page became visible, checking connection health...",
-            );
-            haStore.checkAndReconnect();
+    async function handleVisibilityChange() {
+        if (document.visibilityState !== "visible") return;
+
+        // If already connected, nothing to do
+        if (haStore.connectionStatus === "connected") return;
+
+        // If we have credentials, attempt reconnect
+        const url = localStorage.getItem("ha_url");
+        const token = localStorage.getItem("ha_token");
+        if (!url || !token) return;
+
+        console.log("[Visibility] PWA returned to foreground. Reconnecting...");
+        isInitializing = true;
+
+        try {
+            await haStore.reconnect();
+        } catch (err) {
+            console.error("[Visibility] Reconnect failed:", err);
+        } finally {
+            isInitializing = false;
         }
     }
 </script>
@@ -92,6 +90,8 @@
                         Connected
                     {:else if haStore.connectionStatus === "error" || haStore.connectionStatus === "auth_failed"}
                         Auth Failed
+                    {:else if haStore.connectionStatus === "reconnecting"}
+                        Reconnecting...
                     {:else}
                         Disconnected
                     {/if}
