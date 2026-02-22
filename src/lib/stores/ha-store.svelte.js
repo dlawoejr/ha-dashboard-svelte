@@ -186,25 +186,36 @@ export function createHAStore() {
             // OPTIMIZATION: If we already have entities, this is a Reconnect. 
             // We only need to fetch States to sync missed events, no need to fetch Areas/Registry again!
             if (entities.length > 0) {
-                console.log(`[PERF_V9] Reconnect DETECTED. Starting Delta Sync...`);
+                console.log(`[PERF_V10] Reconnect DETECTED. Starting Delta Sync...`);
                 const t0 = performance.now();
                 const states = await ha.getStates();
                 const t1 = performance.now();
-                console.log(`[PERF_V9] Fetched Delta States in ${Math.round(t1 - t0)}ms`);
+                console.log(`[PERF_V10] Fetched Delta States in ${Math.round(t1 - t0)}ms`);
+
+                // OPTIMIZATION: 
+                // 1. Array search O(N^2) -> Map lookup O(1)
+                // 2. Prevent UI freeze by batching all Svelte $state updates into ONE assignment
+                const entityMap = new Map();
+                const newEntities = [...entities];
+                newEntities.forEach((e, i) => entityMap.set(e.entity_id, i));
 
                 states.forEach(state => {
-                    const index = entities.findIndex(e => e.entity_id === state.entity_id);
-                    if (index !== -1) {
-                        entities[index] = {
-                            ...entities[index],
+                    const index = entityMap.get(state.entity_id);
+                    if (index !== undefined) {
+                        newEntities[index] = {
+                            ...newEntities[index],
                             ...state,
                             attributes: state.attributes,
                             state: state.state
                         };
                     }
                 });
+
+                // Trigger Svelte reactivity exactly ONCE
+                entities = newEntities;
+
                 const t2 = performance.now();
-                console.log(`[PERF_V9] Syncing states to UI took ${Math.round(t2 - t1)}ms. Total Delta Time: ${Math.round(t2 - t0)}ms`);
+                console.log(`[PERF_V10] Syncing states to UI took ${Math.round(t2 - t1)}ms. Total Delta Time: ${Math.round(t2 - t0)}ms`);
             } else {
                 // Cold Start: Fetch everything
                 const [fetchedFloors, fetchedAreas, entityRegistry, states] = await Promise.all([
