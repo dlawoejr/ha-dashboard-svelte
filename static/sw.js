@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ha-dashboard-v3';
+const CACHE_NAME = 'ha-dashboard-v4';
 const ASSETS = [
     './',
     './images/icon-192.png',

@@ -186,7 +186,11 @@ export function createHAStore() {
             // OPTIMIZATION: If we already have entities, this is a Reconnect. 
             // We only need to fetch States to sync missed events, no need to fetch Areas/Registry again!
             if (entities.length > 0) {
+                console.log(`[PERF_V9] Reconnect DETECTED. Starting Delta Sync...`);
+                const t0 = performance.now();
                 const states = await ha.getStates();
+                const t1 = performance.now();
+                console.log(`[PERF_V9] Fetched Delta States in ${Math.round(t1 - t0)}ms`);
 
                 states.forEach(state => {
                     const index = entities.findIndex(e => e.entity_id === state.entity_id);
@@ -199,6 +203,8 @@ export function createHAStore() {
                         };
                     }
                 });
+                const t2 = performance.now();
+                console.log(`[PERF_V9] Syncing states to UI took ${Math.round(t2 - t1)}ms. Total Delta Time: ${Math.round(t2 - t0)}ms`);
             } else {
                 // Cold Start: Fetch everything
                 const [fetchedFloors, fetchedAreas, entityRegistry, states] = await Promise.all([
