@@ -15,23 +15,6 @@
     let isRecovering = false;
     let hiddenAt = 0; // Track when the app goes into the background
 
-    let showReconnectingUI = $state(false);
-    let reconnectTimeout;
-
-    $effect(() => {
-        if (haStore.connectionStatus === "reconnecting") {
-            if (!reconnectTimeout) {
-                reconnectTimeout = setTimeout(() => {
-                    showReconnectingUI = true;
-                }, 500); // 500ms delay before showing UI
-            }
-        } else {
-            clearTimeout(reconnectTimeout);
-            reconnectTimeout = null;
-            showReconnectingUI = false;
-        }
-    });
-
     onMount(async () => {
         // Auto-connect if url and token are provided via query string (QR code scan)
         const params = new URLSearchParams(window.location.search);
@@ -231,7 +214,7 @@
         </div>
     </header>
 
-    {#if isInitializing || showReconnectingUI || haStore.connectionStatus === "reconnect_failed"}
+    {#if isInitializing || haStore.connectionStatus === "reconnect_failed"}
         <div
             class="loading-screen glass-panel"
             style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem;"
