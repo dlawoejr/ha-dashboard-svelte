@@ -196,7 +196,7 @@
     <header>
         <h1>
             HA Dashboard <span
-                style="color: red; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"
+                style="color: yellow; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"
                 >[TEST V8]</span
             >
         </h1>
