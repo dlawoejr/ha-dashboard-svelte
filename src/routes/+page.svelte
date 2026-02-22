@@ -169,14 +169,22 @@
 
             if (!url || !token) return;
 
-            isInitializing = true;
+            // SILENT RECONNECT: Do NOT set isInitializing = true!
+            // The user already has a fully rendered dashboard from the previous session.
+            // We reconnect entirely in the background. Svelte's $state reactivity will
+            // silently update button colors the instant fresh data arrives.
+            // The loading screen only appears on cold starts (no cached entities).
             console.log(
-                `[V11 TIMER] Calling haStore.reconnect() at ${new Date().toISOString()}`,
+                `[V12] Silent reconnect started at ${new Date().toISOString()}`,
             );
-            await haStore.reconnect();
-            console.log(
-                `[V11 TIMER] haStore.reconnect() FINISHED at ${new Date().toISOString()}`,
-            );
+            haStore
+                .reconnect()
+                .then(() => {
+                    console.log(
+                        `[V12] Silent reconnect FINISHED at ${new Date().toISOString()}`,
+                    );
+                })
+                .catch((e) => console.error(e));
         } catch (err) {
             console.error("[Visibility EVENT] Reconnect flow failed:", err);
         } finally {
