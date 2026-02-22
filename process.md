@@ -46,11 +46,21 @@
      - 1차 시도: `visibilitychange` 이벤트로 화면 복귀 시 재접속 → 실패 (안드로이드가 `onclose` 이벤트를 즉시 발생시키지 않아 `connectionStatus`가 여전히 `connected`로 보임).
      - 2차 시도: WebSocket `onclose` 이벤트에 직접 5회 재접속 루프 장착 → 실패 (`onerror` + `onclose` 이중 발사로 인한 경쟁상태(Race Condition) + 이전 죽은 소켓 미정리로 유령 콜백 충돌).
      - 3차 시도: Race Condition 수정 (`reconnectScheduled` 가드 플래그 + `ha.disconnect()` 소켓 정리 메서드 추가) → 실패 (안드로이드 좀비 소켓이 `readyState === OPEN`이라고 거짓 보고하여 모든 수동 감지 실패).
-   - **최종 해결책 - 능동적 Ping/Pong 건강 검진**:
-     - `ha-api.js`에 `ping()` 메서드 추가: HA 서버에 `{type:'ping'}` 메시지를 실제로 전송하고 3초 내 `{type:'pong'}` 응답 수신 여부를 확인.
-     - `ha-store.svelte.js`에 `checkAndReconnect()` 함수 추가: 3가지 시나리오(좀비 소켓 / 알려진 단절 / 냉시작) 대응.
-     - `+page.svelte`에서 `<svelte:document onvisibilitychange />` 이벤트로 화면 복귀 시 `checkAndReconnect()` 호출.
-     - 초기 접속 시 최대 3회 재시도 로직 적용 (냉시작 안정성 강화).
-   - **부수 버그 수정**:
-     - 로그인 입력창에 `ws://...api/websocket` 주소가 노출되던 URL 오염 버그 수정 (`Login.svelte`에서 `ws://` → `http://` 정규화).
-     - `static/sw.js` 캐시 버전 `v1 → v2`로 변경하여 옛날 Vanilla JS 프로젝트의 잔여 캐시 강제 삭제 + WebSocket 요청 캐시 우회 처리.
+   - **4차 수정 - 능동적 Ping/Pong 건강 검진**:
+     - `ha-api.js`에 `ping()` 메서드 추가: HA 서버에 `{type:'ping'}` 메시지를 전송하고 3초 내 `{type:'pong'}` 수신 확인. 좀비 소켓 해결.
+     - `visibilitychange` 이벤트만을 유일한 재접속 진입점으로 통일하여 이벤트 경쟁 상태 완화.
+   - **5차 수정 - 오프라인 무한 재시도 (Infinite Retry)**:
+     - `ERR_INTERNET_DISCONNECTED` 발생 시 5회 시도 후 포기하던 로직을 **지수 백오프(Exponential Backoff)** 기반의 **무한 재시도 루프**로 변경. (URL/토큰 오류인 `Auth failed` 시에만 중단).
+     - 무한 로딩 중 빠져나갈 수 있도록 `Cancel / Change Server` 버튼 추가.
+   - **6차 수정 - 초기 연결 onclose 경쟁 상태 해결**:
+     - 오프라인 상태에서 `new WebSocket()` 시도 시 `onerror`와 `onclose`가 즉각 연속 발생. 
+     - 5차의 무한 루프가 돌기도 전에 `onclose`가 상태를 `disconnected`로 덮어써버리는 문제 발견.
+     - `ha-api.js`에서 한 번이라도 정상 연결(`onopen`)되었던 소켓만 `onclose` 이벤트를 발생시키도록 가드(`connectedOnce`) 추가.
+   - **7차 최종 수정 - Ping 검사와 WebSockets onclose간의 악질적 동시성 버그(Race Condition) 철결**:
+     - 화면 복귀 시점(`visibilitychange`)에 날린 3초짜리 Ping(`verifyConnection`) 대기 시간 도중, 인터넷이 복구되어 시스템 자체의 `onclose` 이벤트가 발생.
+     - `onclose`가 정상적으로 새 소켓을 만들며 무한 루프(`reconnect`)를 돌기 시작했는데, Ping 검사가 뒤늦게 "아까 그 옛날 소켓 응답 없네"라며 **새로 만들어진 소켓을 강제로 부수고** 상태를 `disconnected`로 덮어버림.
+     - 결과적으로 무한 접속 루프는 백그라운드에서 계속 도는데 UI는 로그인 창에 갇히는 기현상 발생.
+     - `verifyConnection` 로직이 Ping 전/후의 소켓 인스턴스를 비교(`ha === originalHa`)하여, 도중에 소켓이 교체되었다면 기존 결과를 기각하도록 수정. `isReconnectingLock`을 통해 락(Lock) 보완.
+8. **부수 버그 수정**:
+   - 로그인 입력창에 `ws://...api/websocket` 주소가 노출되던 URL 오염 버그 수정 (`Login.svelte`에서 `ws://` → `http://` 정규화).
+   - `static/sw.js` 캐시 버전 `v1 → v2`로 변경하여 옛날 Vanilla JS 프로젝트의 잔여 캐시 강제 삭제 + WebSocket 캐시 우회.
