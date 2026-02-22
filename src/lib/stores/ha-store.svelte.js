@@ -13,7 +13,7 @@ export function createHAStore() {
 
     /**
      * Connect to Home Assistant.
-     * Pure connection logic only — no reconnect decisions here.
+     * Pure connection logic only — throwing error if failed.
      */
     async function initConnection(url, token) {
         if (!url || !token) throw new Error('URL and Token are required');
@@ -21,7 +21,6 @@ export function createHAStore() {
         currentUrl = url;
         currentToken = token;
 
-        // Always clean up previous connection first
         if (ha) {
             ha.disconnect();
             ha = null;
@@ -29,7 +28,6 @@ export function createHAStore() {
 
         ha = new HomeAssistantAPI(url, token);
 
-        // Simple status update only — NO reconnect logic here
         ha.onConnectionStatus = (status) => {
             connectionStatus = status;
         };
@@ -40,8 +38,32 @@ export function createHAStore() {
     }
 
     /**
-     * Reconnect using stored credentials.
-     * Called by visibilitychange handler — the SOLE reconnect entry point.
+     * Verify if the current connection is actually alive.
+     * Needs to be exported so `+page.svelte` can call it.
+     */
+    async function verifyConnection() {
+        if (!ha || connectionStatus !== 'connected') return false;
+
+        console.log('[HA] Active ping to verify connection...');
+        const isAlive = await ha.ping(3000);
+
+        if (!isAlive) {
+            console.warn('[HA] Ping timeout! Connection is dead.');
+            if (ha) {
+                ha.disconnect();
+                ha = null;
+            }
+            connectionStatus = 'disconnected';
+            return false;
+        }
+
+        console.log('[HA] Ping OK. Connection is alive.');
+        return true;
+    }
+
+    /**
+     * Reconnect using stored credentials with multiple retries.
+     * Called by visibilitychange handler.
      */
     async function reconnect() {
         const url = currentUrl || localStorage.getItem('ha_url');
@@ -51,12 +73,26 @@ export function createHAStore() {
 
         connectionStatus = 'reconnecting';
 
-        try {
-            await initConnection(url, token);
-        } catch (err) {
-            console.error('[HA] Reconnect failed:', err);
-            connectionStatus = 'disconnected';
+        // Try up to 5 times. Android network takes a few seconds to wake up 
+        // after returning from the background.
+        for (let attempt = 1; attempt <= 5; attempt++) {
+            console.log(`[HA] Reconnect attempt ${attempt}/5...`);
+            try {
+                await initConnection(url, token);
+                console.log('[HA] Reconnect successful!');
+                return; // Break out of the loop on success
+            } catch (err) {
+                console.error(`[HA] Attempt ${attempt} failed:`, err);
+                if (attempt < 5) {
+                    // Wait 2 seconds before next attempt to let OS network stabilize
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+            }
         }
+
+        // If all 5 attempts fail, we have no internet or the server is truly down
+        console.error('[HA] All reconnect attempts failed. Giving up.');
+        connectionStatus = 'disconnected';
     }
 
     async function loadInitialData() {
@@ -147,6 +183,7 @@ export function createHAStore() {
         get currentToken() { return currentToken; },
         initConnection,
         reconnect,
+        verifyConnection,
         selectFloor,
         selectArea,
         toggleEntity,
