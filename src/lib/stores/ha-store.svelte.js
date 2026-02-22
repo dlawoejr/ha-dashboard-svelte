@@ -28,8 +28,20 @@ export function createHAStore() {
 
         ha = new HomeAssistantAPI(url, token);
 
+        // Status updates and automatic reconnect on drop
         ha.onConnectionStatus = (status) => {
-            connectionStatus = status;
+            if (status === 'disconnected' && connectionStatus !== 'reconnecting') {
+                const hasCreds = currentUrl || localStorage.getItem('ha_url');
+                if (hasCreds) {
+                    console.log('[HA] Socket closed unexpectedly. Triggering auto-reconnect...');
+                    // Fire and forget - reconnect() handles its own retries
+                    reconnect().catch(e => console.error(e));
+                } else {
+                    connectionStatus = status;
+                }
+            } else if (status !== 'disconnected') {
+                connectionStatus = status;
+            }
         };
 
         await ha.connect();
