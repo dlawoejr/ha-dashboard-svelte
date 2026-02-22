@@ -105,9 +105,10 @@ export function createHAStore() {
         connectionStatus = 'reconnecting';
 
         let attempt = 1;
+        const MAX_ATTEMPTS = 60; // Approx 5 minutes at 5s intervals
 
-        // Infinite retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
-        while (isReconnectingLock) {
+        // Retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
+        while (isReconnectingLock && attempt <= MAX_ATTEMPTS) {
             connectionStatus = 'reconnecting'; // Protect state inside loop
             try {
                 await initConnection(url, token);
@@ -142,6 +143,12 @@ export function createHAStore() {
                 });
                 attempt++;
             }
+        }
+
+        // Exceeded 60 attempts (~5 mins) while active
+        if (isReconnectingLock) {
+            isReconnectingLock = false;
+            connectionStatus = 'reconnect_failed';
         }
     }
 

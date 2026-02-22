@@ -163,30 +163,50 @@
         </div>
     </header>
 
-    {#if isInitializing || haStore.connectionStatus === "reconnecting"}
+    {#if isInitializing || haStore.connectionStatus === "reconnecting" || haStore.connectionStatus === "reconnect_failed"}
         <div
             class="loading-screen glass-panel"
             style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem;"
         >
-            <div class="spinner"></div>
-            <p style="margin-top: 1rem; color: var(--text-dim);">
-                {haStore.connectionStatus === "reconnecting"
-                    ? "Reconnecting to Home Assistant..."
-                    : "Connecting to Home Assistant..."}
-            </p>
-            {#if haStore.connectionStatus === "reconnecting" || !isInitializing}
+            {#if haStore.connectionStatus === "reconnect_failed"}
+                <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <h2 style="color: var(--text-color); margin-bottom: 0.5rem;">
+                    Connection Lost
+                </h2>
+                <p style="color: var(--text-dim); margin-bottom: 2rem;">
+                    Unable to reach Home Assistant after 5 minutes.<br />Please
+                    check your network.
+                </p>
                 <button
-                    class="btn secondary"
-                    style="margin-top: 2rem; width: 100%;"
+                    class="btn primary"
+                    style="width: 100%; margin-bottom: 1rem;"
                     onclick={() => {
-                        haStore.cancelReconnect();
-                        isInitializing = false;
-                        isRecovering = false;
+                        isInitializing = true;
+                        haStore.reconnect();
                     }}
                 >
-                    Cancel / Change Server
+                    Retry Connection
                 </button>
+            {:else}
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem; color: var(--text-dim);">
+                    {haStore.connectionStatus === "reconnecting"
+                        ? "Reconnecting to Home Assistant..."
+                        : "Connecting to Home Assistant..."}
+                </p>
             {/if}
+
+            <button
+                class="btn secondary"
+                style="margin-top: 1rem; width: 100%;"
+                onclick={() => {
+                    haStore.cancelReconnect();
+                    isInitializing = false;
+                    isRecovering = false;
+                }}
+            >
+                Cancel / Change Server
+            </button>
         </div>
     {:else if haStore.connectionStatus !== "connected"}
         <Login />
