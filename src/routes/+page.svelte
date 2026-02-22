@@ -85,21 +85,33 @@
      * 2. Reconnect with retries if we are disconnected or zombie.
      */
     async function handleVisibilityChange() {
+        if (typeof document === "undefined") return;
+
+        const now = new Date().toISOString();
         if (document.visibilityState === "hidden") {
+            console.log(
+                `[V11 TIMER] OS triggered background -> EVENT at ${now}`,
+            );
             hiddenAt = Date.now();
             return;
         }
 
         if (document.visibilityState !== "visible") return;
 
+        console.log(`[V11 TIMER] OS triggered foreground -> EVENT at ${now}`);
+
         // Prevent competing reconnect loops if Android fires event multiple times
         if (isRecovering) {
+            console.log(`[V11 TIMER] Already recovering. Ignored.`);
             return;
         }
 
         try {
             isRecovering = true;
             const timeHiddenMs = Date.now() - hiddenAt;
+            console.log(
+                `[V11 TIMER] Device was hidden for ${timeHiddenMs}ms...`,
+            );
 
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
@@ -113,9 +125,18 @@
 
                 if (isMobile && hiddenAt > 0 && timeHiddenMs > 5000) {
                     // Force the store to consider it disconnected to trigger immediate reconnect logic below
+                    console.log(
+                        `[V11 TIMER] Mobile > 5s logic HIT. Forcing Disconnect at ${new Date().toISOString()}`,
+                    );
                     haStore.forceDisconnectForFastRecovery();
                 } else {
+                    console.log(
+                        `[V11 TIMER] verifying connection (ping)... at ${new Date().toISOString()}`,
+                    );
                     const isAlive = await haStore.verifyConnection();
+                    console.log(
+                        `[V11 TIMER] verifyConnection result: ${isAlive} at ${new Date().toISOString()}`,
+                    );
                     if (isAlive) {
                         return; // All good, nothing to do
                     }
@@ -123,6 +144,9 @@
             } else if (haStore.connectionStatus === "reconnecting") {
                 // Background reconnect loop might be sleeping in its 5s backoff.
                 // Cancel it so we can start a fresh, 0-delay instant connecting loop immediately.
+                console.log(
+                    `[V11 TIMER] cancelling background loop... at ${new Date().toISOString()}`,
+                );
                 haStore.cancelReconnect();
             }
 
@@ -133,7 +157,13 @@
             if (!url || !token) return;
 
             isInitializing = true;
+            console.log(
+                `[V11 TIMER] Calling haStore.reconnect() at ${new Date().toISOString()}`,
+            );
             await haStore.reconnect();
+            console.log(
+                `[V11 TIMER] haStore.reconnect() FINISHED at ${new Date().toISOString()}`,
+            );
         } catch (err) {
             console.error("[Visibility EVENT] Reconnect flow failed:", err);
         } finally {
