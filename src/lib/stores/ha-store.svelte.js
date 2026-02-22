@@ -239,6 +239,18 @@ export function createHAStore() {
         return callService('input_number', 'set_value', { value: parseFloat(value) }, { entity_id: entityId });
     }
 
+    /**
+     * Instantly tear down the socket without prompting login.
+     * Used by +page.svelte when bypassing the 3000ms ping check for extreme speed.
+     */
+    function forceDisconnectForFastRecovery() {
+        if (ha) {
+            ha.disconnect();
+            ha = null;
+        }
+        connectionStatus = 'disconnected';
+    }
+
     return {
         get connectionStatus() { return connectionStatus; },
         get floors() { return floors; },
@@ -252,6 +264,7 @@ export function createHAStore() {
         reconnect,
         verifyConnection,
         cancelReconnect,
+        forceDisconnectForFastRecovery,
         selectFloor,
         selectArea,
         toggleEntity,

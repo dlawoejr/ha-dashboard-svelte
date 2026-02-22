@@ -13,6 +13,7 @@
 
     let isInitializing = $state(true);
     let isRecovering = false;
+    let hiddenAt = 0; // Track when the app goes into the background
 
     onMount(async () => {
         // Auto-connect if url and token are provided via query string (QR code scan)
@@ -83,6 +84,12 @@
         console.warn(
             `[Visibility EVENT] document.visibilityState = ${document.visibilityState}`,
         );
+
+        if (document.visibilityState === "hidden") {
+            hiddenAt = Date.now();
+            return;
+        }
+
         if (document.visibilityState !== "visible") return;
 
         // Prevent competing reconnect loops if Android fires event multiple times
@@ -99,10 +106,26 @@
             console.warn("[Visibility EVENT] TAB RETURNED TO FOREGROUND!");
             console.warn("========================================");
 
+            const timeHiddenMs = Date.now() - hiddenAt;
+            console.warn(
+                `[Visibility EVENT] App was hidden for ${timeHiddenMs}ms`,
+            );
+
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
-                const isAlive = await haStore.verifyConnection();
-                if (isAlive) return; // All good, nothing to do
+                // EXTREME OPTIMIZATION:
+                // If the app was hidden for more than 5 seconds, mobile OS almost certainly killed the socket.
+                // Doing a 3-second ping here would just waste 3 seconds of UX time. Skip it and reset.
+                if (hiddenAt > 0 && timeHiddenMs > 5000) {
+                    console.warn(
+                        "[Visibility EVENT] Hidden for >5s. Bypassing ping check for instant reconnect!",
+                    );
+                    // Force the store to consider it disconnected to trigger immediate reconnect logic below
+                    haStore.forceDisconnectForFastRecovery();
+                } else {
+                    const isAlive = await haStore.verifyConnection();
+                    if (isAlive) return; // All good, nothing to do
+                }
             }
 
             // Check 2: We are disconnected, or the verifyConnection failed
@@ -135,7 +158,7 @@
     <header>
         <h1>
             HA Dashboard <span
-                style="color: yellow; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"
+                style="color: yellow; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px; -webkit-text-fill-color: initial;"
                 >[TEST V8]</span
             >
         </h1>
