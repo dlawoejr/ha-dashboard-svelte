@@ -110,18 +110,28 @@
      * Fires immediately when OS network is restored or DevTools offline box is unchecked.
      */
     async function handleOnline() {
-        console.log("========================================");
-        console.log("[Network] BROWSER DETECTED ONLINE EVENT!");
-        console.log("========================================");
+        console.warn("========================================");
+        console.warn("[Network EVENT] BROWSER DETECTED window.ononline FIRED!");
+        console.warn("========================================");
 
         if (haStore.connectionStatus !== "connected") {
-            console.log(
-                "[Network] Status is not connected. Forcing reconnect loop.",
+            console.warn(
+                "[Network EVENT] Status is not connected. Forcing reconnect loop.",
             );
             isInitializing = true;
             await haStore.reconnect();
             isInitializing = false;
+        } else {
+            console.warn(
+                "[Network EVENT] Status is already connected. Skipping reconnect.",
+            );
         }
+    }
+
+    async function handleOffline() {
+        console.warn("========================================");
+        console.warn("[Network EVENT] window.onoffline FIRED!");
+        console.warn("========================================");
     }
 
     /**
@@ -131,21 +141,24 @@
      * 2. Reconnect with retries if we are disconnected or zombie.
      */
     async function handleVisibilityChange() {
+        console.warn(
+            `[Visibility EVENT] document.visibilityState = ${document.visibilityState}`,
+        );
         if (document.visibilityState !== "visible") return;
 
         // Prevent competing reconnect loops if Android fires event multiple times
         if (isRecovering) {
-            console.log(
-                "[Visibility] Recovery already in progress, ignoring duplicate event.",
+            console.warn(
+                "[Visibility EVENT] Recovery already in progress, ignoring duplicate event.",
             );
             return;
         }
 
         try {
             isRecovering = true;
-            console.log("========================================");
-            console.log("[Visibility] TAB RETURNED TO FOREGROUND!");
-            console.log("========================================");
+            console.warn("========================================");
+            console.warn("[Visibility EVENT] TAB RETURNED TO FOREGROUND!");
+            console.warn("========================================");
 
             // Check 1: Are we genuinely connected?
             if (haStore.connectionStatus === "connected") {
@@ -159,27 +172,34 @@
 
             if (!url || !token) return;
 
-            console.log(
-                "[Visibility] PWA returned to foreground. Need reconnect.",
-            );
+            console.warn("[Visibility EVENT] Calling haStore.reconnect()...");
             isInitializing = true;
 
             await haStore.reconnect();
+            console.warn("[Visibility EVENT] haStore.reconnect() finished.");
         } catch (err) {
-            console.error("[Visibility] Reconnect flow failed:", err);
+            console.error("[Visibility EVENT] Reconnect flow failed:", err);
         } finally {
             isInitializing = false;
             isRecovering = false;
+            console.warn(
+                "[Visibility EVENT] Flow complete. isRecovering set to false.",
+            );
         }
     }
 </script>
 
-<svelte:window ononline={handleOnline} />
+<svelte:window ononline={handleOnline} onoffline={handleOffline} />
 <svelte:document onvisibilitychange={handleVisibilityChange} />
 
 <div id="app">
     <header>
-        <h1>HA Dashboard</h1>
+        <h1>
+            HA Dashboard <span
+                style="color: red; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"
+                >[TEST V8]</span
+            >
+        </h1>
         <div class="header-actions">
             {#if haStore.connectionStatus === "connected"}
                 <div class="desktop-only">
