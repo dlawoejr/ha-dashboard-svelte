@@ -30,26 +30,17 @@ export function createHAStore() {
 
         ha = new HomeAssistantAPI(url, token);
 
-        // Status updates and automatic reconnect on drop
+        // Status updates only - NO auto-reconnect here!
+        // The handleVisibilityChange in +page.svelte is the SOLE owner of reconnection.
+        // Having two reconnect triggers causes a race condition where the socket connects,
+        // then immediately dies, then reconnects again 17 seconds later (20s total delay on mobile).
         ha.onConnectionStatus = (status) => {
-            if (status === 'disconnected' && connectionStatus !== 'reconnecting') {
-                const hasCreds = currentUrl || localStorage.getItem('ha_url');
-
-                // CRITICAL OPTIMIZATION: Only start the infinite reconnect loop if the app is 
-                // actually visible on the screen. If it's hidden in the background, just accept 
-                // the death of the socket to save battery. The visibilitychange event in +page.svelte 
-                // will cleanly revive it when the user returns.
-                const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
-
-                if (hasCreds && isVisible) {
-                    // Fire and forget - reconnect() handles its own retries
-                    reconnect().catch(e => console.error(e));
-                } else {
-                    connectionStatus = status;
-                }
-            } else if (status !== 'disconnected') {
-                connectionStatus = status;
+            console.log(`[V11] onConnectionStatus: ${status} (current: ${connectionStatus})`);
+            if (status === 'disconnected' && connectionStatus === 'reconnecting') {
+                // Don't overwrite 'reconnecting' with 'disconnected' while a reconnect loop is active
+                return;
             }
+            connectionStatus = status;
         };
 
         await ha.connect();

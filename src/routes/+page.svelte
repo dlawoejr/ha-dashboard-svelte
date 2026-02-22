@@ -181,7 +181,7 @@
         <h1>
             HA Dashboard <span
                 style="color: yellow; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px; -webkit-text-fill-color: initial;"
-                >[TEST V11]</span
+                >[TEST V12]</span
             >
         </h1>
         <div class="header-actions">
