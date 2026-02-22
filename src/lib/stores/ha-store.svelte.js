@@ -58,15 +58,23 @@ export function createHAStore() {
         if (!ha || connectionStatus !== 'connected') return false;
 
         console.log('[HA] Active ping to verify connection...');
-        const isAlive = await ha.ping(3000);
+        const originalHa = ha;
+        const isAlive = await originalHa.ping(3000);
+
+        if (ha !== originalHa) {
+            console.log('[HA] Socket instance changed during ping. Ignoring stale result.');
+            return true;
+        }
 
         if (!isAlive) {
             console.warn('[HA] Ping timeout! Connection is dead.');
-            if (ha) {
+            if (ha === originalHa) {
                 ha.disconnect();
                 ha = null;
             }
-            connectionStatus = 'disconnected';
+            if (!isReconnectingLock) {
+                connectionStatus = 'disconnected';
+            }
             return false;
         }
 
@@ -97,6 +105,7 @@ export function createHAStore() {
         // Infinite retry loop for network drops (e.g. ERR_INTERNET_DISCONNECTED)
         while (isReconnectingLock) {
             console.log(`[HA] Reconnect attempt ${attempt}...`);
+            connectionStatus = 'reconnecting'; // Protect state inside loop
             try {
                 await initConnection(url, token);
                 console.log('[HA] Reconnect successful!');
