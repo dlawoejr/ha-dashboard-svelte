@@ -259,7 +259,7 @@
                 Cancel / Change Server
             </button>
         </div>
-    {:else if haStore.connectionStatus !== "connected"}
+    {:else if haStore.connectionStatus !== "connected" && haStore.entities.length === 0}
         <Login />
     {:else}
         <div id="main-layout">
