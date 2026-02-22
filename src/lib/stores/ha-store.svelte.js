@@ -183,27 +183,46 @@ export function createHAStore() {
         if (!ha) return;
 
         try {
-            const [fetchedFloors, fetchedAreas, entityRegistry, states] = await Promise.all([
-                ha.getFloors(),
-                ha.getAreas(),
-                ha.getEntityRegistry(),
-                ha.getStates()
-            ]);
+            // OPTIMIZATION: If we already have entities, this is a Reconnect. 
+            // We only need to fetch States to sync missed events, no need to fetch Areas/Registry again!
+            if (entities.length > 0) {
+                const states = await ha.getStates();
 
-            floors = fetchedFloors.sort((a, b) => (a.level || 0) - (b.level || 0));
-            areas = fetchedAreas;
+                states.forEach(state => {
+                    const index = entities.findIndex(e => e.entity_id === state.entity_id);
+                    if (index !== -1) {
+                        entities[index] = {
+                            ...entities[index],
+                            ...state,
+                            attributes: state.attributes,
+                            state: state.state
+                        };
+                    }
+                });
+            } else {
+                // Cold Start: Fetch everything
+                const [fetchedFloors, fetchedAreas, entityRegistry, states] = await Promise.all([
+                    ha.getFloors(),
+                    ha.getAreas(),
+                    ha.getEntityRegistry(),
+                    ha.getStates()
+                ]);
 
-            entities = states.map(state => {
-                const registryEntry = entityRegistry.find(e => e.entity_id === state.entity_id);
-                return {
-                    ...state,
-                    area_id: registryEntry ? registryEntry.area_id : null,
-                    name: (registryEntry && registryEntry.name) || state.attributes.friendly_name || state.entity_id
-                };
-            });
+                floors = fetchedFloors.sort((a, b) => (a.level || 0) - (b.level || 0));
+                areas = fetchedAreas;
 
-            if (floors.length > 0) {
-                selectFloor(floors[0].floor_id);
+                entities = states.map(state => {
+                    const registryEntry = entityRegistry.find(e => e.entity_id === state.entity_id);
+                    return {
+                        ...state,
+                        area_id: registryEntry ? registryEntry.area_id : null,
+                        name: (registryEntry && registryEntry.name) || state.attributes.friendly_name || state.entity_id
+                    };
+                });
+
+                if (floors.length > 0) {
+                    selectFloor(floors[0].floor_id);
+                }
             }
 
             ha.onStateChange = (event) => {
