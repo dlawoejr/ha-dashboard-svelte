@@ -10,24 +10,6 @@ export class HomeAssistantAPI {
         this.callbacks = new Map();
         this.onStateChange = null;
         this.onConnectionStatus = null;
-        this.heartbeatTimer = null;
-    }
-
-    startHeartbeat() {
-        if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-        this.heartbeatTimer = setInterval(async () => {
-            if (this.isConnected()) {
-                console.log('[HA] Sending 15s background heartbeat ping...');
-                const isAlive = await this.ping(3000);
-                if (!isAlive) {
-                    console.warn('[HA] Background heartbeat failed! Socket is a zombie. Closing...');
-                    // Closing it will naturally trigger onclose, which handles reconnect cleanly
-                    if (this.socket) {
-                        this.socket.close();
-                    }
-                }
-            }
-        }, 15000);
     }
 
     connect() {
@@ -47,7 +29,6 @@ export class HomeAssistantAPI {
             this.socket.onopen = () => {
                 console.log('WS Connection opened');
                 connectedOnce = true;
-                this.startHeartbeat();
             };
 
             this.socket.onmessage = (event) => {
@@ -78,11 +59,6 @@ export class HomeAssistantAPI {
     }
 
     disconnect() {
-        if (this.heartbeatTimer) {
-            clearInterval(this.heartbeatTimer);
-            this.heartbeatTimer = null;
-        }
-
         if (this.socket) {
             // Detach all event handlers to prevent ghost callbacks
             this.socket.onopen = null;
