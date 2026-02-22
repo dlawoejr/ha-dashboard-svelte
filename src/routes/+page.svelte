@@ -6,70 +6,9 @@
     import Tabs from "$lib/components/Tabs.svelte";
     import EntityCard from "$lib/components/EntityCard.svelte";
     import QRConnect from "$lib/components/QRConnect.svelte";
-    import SchedulerLikeCard from "$lib/components/SchedulerLikeCard.svelte";
-
-    /** @param {string} domain */
-    function schedulerIconFor(domain) {
-        if (domain === "light") return "L";
-        if (domain === "switch") return "S";
-        if (domain === "input_boolean") return "B";
-        if (domain === "input_number") return "N";
-        return "T";
-    }
-
-    /** @param {string} domain */
-    function schedulerActionFor(domain) {
-        if (domain === "input_number") return "set value";
-        return "turn on";
-    }
-
-    const schedulerTimeCycle = [
-        "at 06:40",
-        "at sunset (21:20)",
-        "at 14:00",
-        "at 20:20",
-        "at 09:00",
-        "at 23:10",
-    ];
-
-    const schedulerDayCycle = [
-        "every day",
-        "every tuesday and thursday",
-        "every saturday and sunday",
-        "every monday",
-    ];
 
     let activeEntities = $derived(
         haStore.entities.filter((e) => e.area_id === haStore.activeAreaId),
-    );
-
-    let schedulerItems = $derived(
-        haStore.entities
-            .filter((entity) => {
-                const domain = entity.entity_id.split(".")[0];
-                return [
-                    "input_boolean",
-                    "switch",
-                    "light",
-                    "input_number",
-                ].includes(domain);
-            })
-            .slice(0, 6)
-            .map((entity, index) => {
-                const domain = entity.entity_id.split(".")[0];
-                return {
-                    id: entity.entity_id,
-                    icon: schedulerIconFor(domain),
-                    name:
-                        entity.attributes?.friendly_name ||
-                        entity.name ||
-                        entity.entity_id,
-                    action: schedulerActionFor(domain),
-                    days: schedulerDayCycle[index % schedulerDayCycle.length],
-                    time: schedulerTimeCycle[index % schedulerTimeCycle.length],
-                    enabled: entity.state !== "off",
-                };
-            }),
     );
 
     let isInitializing = $state(true);
@@ -268,10 +207,6 @@
                             No supported entities found in this area.
                         </div>
                     {/if}
-                </section>
-
-                <section class="scheduler-preview">
-                    <SchedulerLikeCard items={schedulerItems} />
                 </section>
             </main>
         </div>
