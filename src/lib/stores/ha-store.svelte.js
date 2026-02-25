@@ -44,7 +44,10 @@ export function createHAStore() {
             connectionStatus = status;
         };
 
+        const tConnectStart = performance.now();
         await ha.connect();
+        const tConnectEnd = performance.now();
+        console.log(`[PERF_V15] WebSocket Connect + Auth took ${Math.round(tConnectEnd - tConnectStart)}ms`);
 
         // REVERT: Mobile browsers heavily throttle or suspend background Promises 
         // launched just as the app comes to foreground. We must await this synchronously
@@ -249,7 +252,10 @@ export function createHAStore() {
             .filter(e => e.area_id !== null && dashboardDomains.includes(e.entity_id.split(".")[0]))
             .map(e => e.entity_id);
 
+        const tSubStart = performance.now();
         await updateSubscription(dashboardEntityIds);
+        const tSubEnd = performance.now();
+        console.log(`[PERF_V15] setupGlobalSubscription (HA Server Processing) took ${Math.round(tSubEnd - tSubStart)}ms`);
     }
 
     function selectFloor(floorId) {
