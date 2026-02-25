@@ -11,6 +11,13 @@
         haStore.entities.filter((e) => e.area_id === haStore.activeAreaId),
     );
 
+    $effect(() => {
+        const entityIds = activeEntities.map((e) => e.entity_id);
+        if (haStore.connectionStatus === "connected" && entityIds.length > 0) {
+            haStore.updateSubscription(entityIds);
+        }
+    });
+
     let isInitializing = $state(true);
     let isRecovering = false;
     let hiddenAt = 0; // Track when the app goes into the background

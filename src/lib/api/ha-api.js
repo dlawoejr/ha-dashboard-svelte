@@ -164,8 +164,19 @@ export class HomeAssistantAPI {
                 break;
 
             case 'event':
-                if (data.event && data.event.data && this.onStateChange) {
-                    this.onStateChange(data.event.data);
+                if (data.event && this.onStateChange) {
+                    if (data.event.data) {
+                        // Legacy subscribe_events response (state_changed)
+                        this.onStateChange(data.event.data);
+                    } else if (data.event.variables && data.event.variables.trigger) {
+                        // New subscribe_trigger response
+                        const trigger = data.event.variables.trigger;
+                        this.onStateChange({
+                            entity_id: trigger.entity_id || trigger.to_state?.entity_id,
+                            new_state: trigger.to_state,
+                            old_state: trigger.from_state
+                        });
+                    }
                 }
                 break;
         }
@@ -176,6 +187,10 @@ export class HomeAssistantAPI {
     }
 
     sendCommand(message) {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            return Promise.reject(new Error('Not connected'));
+        }
+
         const id = this.idCounter++;
         return new Promise((resolve, reject) => {
             this.callbacks.set(id, { resolve, reject });
@@ -189,6 +204,30 @@ export class HomeAssistantAPI {
 
     subscribeEvents() {
         return this.sendCommand({ type: 'subscribe_events', event_type: 'state_changed' });
+    }
+
+    subscribeEntities(entityIds) {
+        if (!entityIds || entityIds.length === 0) return Promise.resolve(() => { });
+
+        const id = this.idCounter++;
+        return new Promise((resolve, reject) => {
+            this.callbacks.set(id, { resolve, reject });
+            this.send({
+                id,
+                type: 'subscribe_trigger',
+                trigger: {
+                    platform: 'state',
+                    entity_id: entityIds
+                }
+            });
+        }).then(() => {
+            // Unsubscribe function to tear down this specific trigger
+            return () => {
+                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    this.sendCommand({ type: 'unsubscribe_events', subscription: id }).catch(() => { });
+                }
+            };
+        });
     }
 
     callService(domain, service, serviceData, target) {

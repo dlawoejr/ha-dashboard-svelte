@@ -11,6 +11,7 @@ export function createHAStore() {
     let currentToken = $state('');
     let ha = null;
     let isReconnectingLock = false;
+    let currentSubscriptionUnsubscribe = null;
     let sleepResolver = null;
 
     /**
@@ -44,7 +45,6 @@ export function createHAStore() {
         };
 
         await ha.connect();
-        await ha.subscribeEvents();
 
         // REVERT: Mobile browsers heavily throttle or suspend background Promises 
         // launched just as the app comes to foreground. We must await this synchronously
@@ -293,6 +293,24 @@ export function createHAStore() {
         connectionStatus = 'disconnected';
     }
 
+    async function updateSubscription(entityIds) {
+        if (!ha || connectionStatus !== 'connected') return;
+
+        // Unsubscribe from previous trigger to avoid memory/event leaks on the server
+        if (currentSubscriptionUnsubscribe) {
+            currentSubscriptionUnsubscribe();
+            currentSubscriptionUnsubscribe = null;
+        }
+
+        if (entityIds && entityIds.length > 0) {
+            try {
+                currentSubscriptionUnsubscribe = await ha.subscribeEntities(entityIds);
+            } catch (err) {
+                console.error('Failed to subscribe to entities:', err);
+            }
+        }
+    }
+
     return {
         get connectionStatus() { return connectionStatus; },
         get floors() { return floors; },
@@ -311,7 +329,8 @@ export function createHAStore() {
         selectArea,
         toggleEntity,
         setNumber,
-        updateEntityState
+        updateEntityState,
+        updateSubscription
     };
 }
 
