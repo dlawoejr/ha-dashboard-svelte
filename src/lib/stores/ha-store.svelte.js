@@ -202,6 +202,10 @@ export function createHAStore() {
                 }
             }
 
+            // Set up a permanent global subscription for ALL entities the dashboard cares about
+            // This prevents needing to re-subscribe or sync when switching tabs/areas!
+            await setupGlobalSubscription();
+
             ha.onStateChange = (event) => {
                 updateEntityState(event.new_state);
             };
@@ -237,6 +241,15 @@ export function createHAStore() {
         entities = newEntities;
         const t2 = performance.now();
         console.log(`[PERF_V13] Delta Sync completed in ${Math.round(t2 - t0)}ms`);
+    }
+
+    async function setupGlobalSubscription() {
+        const dashboardDomains = ["input_boolean", "switch", "light", "input_number"];
+        const dashboardEntityIds = entities
+            .filter(e => e.area_id !== null && dashboardDomains.includes(e.entity_id.split(".")[0]))
+            .map(e => e.entity_id);
+
+        await updateSubscription(dashboardEntityIds);
     }
 
     function selectFloor(floorId) {
@@ -304,8 +317,6 @@ export function createHAStore() {
         if (entityIds && entityIds.length > 0) {
             try {
                 currentSubscriptionUnsubscribe = await ha.subscribeEntities(entityIds);
-                // Fetch the latest states immediately to catch any changes we missed!
-                await syncStates();
             } catch (err) {
                 console.error('Failed to subscribe to entities:', err);
             }
