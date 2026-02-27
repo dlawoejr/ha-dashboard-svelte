@@ -108,3 +108,58 @@
     1. **Service Worker 예외 처리 롤백 및 캐시 바이패스 (V13)**: Chrome DevTools에서 발생하는 `net::ERR_FAILED` 에러 해결을 위해 `sw.js`의 `fetch` 이벤트 핸들러를 뜯어고쳐서, Vite HMR 등 개발 환경 통신 시 캐시가 무조건 우회되도록 처리함.
     2. **단일 글로벌 WSS 구독 아키텍처 (V14)**: 동적 탭 구독 `$effect` 로직을 앱 전체에서 영구 삭제. 대신 폰 화면을 켰을 때 **최초 1회 `get_states`를 호출하고, 그 1000개 기기 중 "대시보드 전용 기기"만 추출하여 백그라운드 단일 `subscribe_trigger`로 영구 구독**하는 최적화 구조로 개편. 이제 탭 전환 시 어떠한 서버 통신도 발생하지 않고 즉각 전환됨.
     3. **재연결 딜레이 추적 및 `Promise.all` 병렬화 (V15)**: `[PERF_V15]` 타이머를 코드 곳곳에 심어 병목을 추적한 결과, 인증 단계(1343ms) -> 데이타 동기화(408ms) -> 글로벌 구독(317ms)이 `await` 폭포수로 인해 직렬 실행되며 2초를 잡아먹고 있다는 것을 수학적으로 증명해냄. 바로 코드 로직에 `Promise.all`을 적용해 데이터 동기화와 글로벌 구독 설정을 "병렬(Concurrency)"로 실행시켜 약 300~400ms(50%)의 절대 지연을 완전히 단축시킴.
+
+---
+
+## 🏷️ 레이블 기반 엔티티 그룹핑 및 복합 카드 UI 구현
+
+> 작업일: 2026-02-27
+
+### 🎯 목표
+
+Home Assistant의 **레이블(Label)** 정보를 활용하여 동일 레이블을 가진 엔티티들을 자동으로 그룹핑하고, 그룹별로 **계기판(Gauge) + 3단 드래그 스위치**가 결합된 복합 UI 카드를 표시한다.
+
+### 📋 구현 내용
+
+#### 1. HA API 확장 (`ha-api.js`)
+- `getDeviceRegistry()`: 기기 레지스트리 조회 API 추가
+- `getLabelRegistry()`: 레이블 레지스트리 조회 API 추가
+
+#### 2. 스토어 그룹핑 로직 (`ha-store.svelte.js`)
+- `loadInitialData()`에 기기/레이블 레지스트리 병렬 fetch 추가
+- 엔티티 → 기기 → 레이블 매핑 체인 구현
+- `entityLabelMap` 해시맵으로 엔티티별 레이블 정보 연결
+
+#### 3. 페이지 렌더링 로직 (`+page.svelte`)
+- `displayItems` derived state로 레이블 기반 그룹핑 수행
+- 조건: 동일 레이블에 `input_boolean` 2개 + `input_number` 1개
+- `input_boolean`은 `entity_id` 오름차순 정렬하여 스위치에 고정 할당
+- 그룹 미충족 엔티티는 기존 `EntityCard`로 렌더링
+
+#### 4. 복합 카드 UI (`LabelGroupCard.svelte`) [신규]
+
+**게이지 (Gauge)**
+- SVG 반원형 파란색 트랙 (`#0ea5e9`, stroke-width: 12)
+- 노란색 쐐기 형태 바늘 (`#facc15`), CSS transform으로 회전
+- 바늘 길이: 반지름에서 숫자 영역을 뺀 길이 (y=30 ~ y=4)
+- 숫자: 정수 표시, 단위 `%`
+- 게이지 크기: 180px
+- 하단 라벨: `[레이블명] 열림 상태`
+
+**3단 드래그 스위치**
+- 세로 트랙 + 파란색 노브(knob) 드래그 앤 드롭 방식
+- 3개 위치: 열기 (A:On/B:Off) / 정지 (A:Off/B:Off) / 닫기 (A:Off/B:On)
+- 열기↔닫기 직접 전환 방지 (반드시 정지를 경유)
+- 낙관적 위치 업데이트: 드롭 시 즉시 스냅, HA 응답 대기 중 되돌림 없음
+- 라벨 더블클릭으로도 전환 가능
+- 드래그 중 애니메이션(transition) 없음 (즉각 반응)
+
+### 📁 변경된 파일
+
+| 파일 | 변경 유형 | 역할 |
+|---|---|---|
+| `src/lib/api/ha-api.js` | 수정 | 기기/레이블 레지스트리 API 추가 |
+| `src/lib/stores/ha-store.svelte.js` | 수정 | 레이블 매핑 로직 및 초기 데이터 확장 |
+| `src/routes/+page.svelte` | 수정 | 그룹핑 derived state 및 조건부 렌더링 |
+| `src/lib/components/LabelGroupCard.svelte` | **신규** | 복합 카드 컴포넌트 (게이지+드래그 스위치) |
+

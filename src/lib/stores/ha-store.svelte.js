@@ -178,36 +178,59 @@ export function createHAStore() {
             // OPTIMIZATION: If we already have entities, this is a Reconnect. 
             // We only need to fetch States to sync missed events, no need to fetch Areas/Registry again!
             if (entities.length > 0) {
-                await syncStates();
+                // HOT RECONNECT: Run Delta Sync and Global Subscription concurrently!
+                await Promise.all([
+                    syncStates(),
+                    setupGlobalSubscription()
+                ]);
             } else {
-                // Cold Start: Fetch everything
-                const [fetchedFloors, fetchedAreas, entityRegistry, states] = await Promise.all([
+                // Cold Start: Fetch everything concurrently, then set up subscription
+                const [fetchedFloors, fetchedAreas, entityRegistry, states, deviceRegistry, labelRegistry] = await Promise.all([
                     ha.getFloors(),
                     ha.getAreas(),
                     ha.getEntityRegistry(),
-                    ha.getStates()
+                    ha.getStates(),
+                    ha.getDeviceRegistry(),
+                    ha.getLabelRegistry()
                 ]);
 
                 floors = fetchedFloors.sort((a, b) => (a.level || 0) - (b.level || 0));
                 areas = fetchedAreas;
 
+                const deviceMap = new Map((deviceRegistry || []).map(d => [d.id, d]));
+                const labelMap = new Map((labelRegistry || []).map(l => [l.label_id, l.name]));
+
                 entities = states.map(state => {
                     const registryEntry = entityRegistry.find(e => e.entity_id === state.entity_id);
+                    let labelSet = new Set();
+
+                    if (registryEntry) {
+                        if (registryEntry.labels) registryEntry.labels.forEach(l => labelSet.add(l));
+                        if (registryEntry.device_id) {
+                            const device = deviceMap.get(registryEntry.device_id);
+                            if (device && device.labels) {
+                                device.labels.forEach(l => labelSet.add(l));
+                            }
+                        }
+                    }
+
+                    const labelNames = Array.from(labelSet).map(id => labelMap.get(id) || id);
+
                     return {
                         ...state,
                         area_id: registryEntry ? registryEntry.area_id : null,
-                        name: (registryEntry && registryEntry.name) || state.attributes.friendly_name || state.entity_id
+                        name: (registryEntry && registryEntry.name) || state.attributes.friendly_name || state.entity_id,
+                        labels: labelNames
                     };
                 });
 
                 if (floors.length > 0) {
                     selectFloor(floors[0].floor_id);
                 }
-            }
 
-            // Set up a permanent global subscription for ALL entities the dashboard cares about
-            // This prevents needing to re-subscribe or sync when switching tabs/areas!
-            await setupGlobalSubscription();
+                // Now that entities are populated, set up the subscription
+                await setupGlobalSubscription();
+            }
 
             ha.onStateChange = (event) => {
                 updateEntityState(event.new_state);

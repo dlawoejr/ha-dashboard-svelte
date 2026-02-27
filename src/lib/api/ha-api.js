@@ -251,4 +251,12 @@ export class HomeAssistantAPI {
     getEntityRegistry() {
         return this.sendCommand({ type: 'config/entity_registry/list' });
     }
+
+    getDeviceRegistry() {
+        return this.sendCommand({ type: 'config/device_registry/list' });
+    }
+
+    getLabelRegistry() {
+        return this.sendCommand({ type: 'config/label_registry/list' });
+    }
 }

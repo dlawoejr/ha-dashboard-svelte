@@ -6,10 +6,72 @@
     import Tabs from "$lib/components/Tabs.svelte";
     import EntityCard from "$lib/components/EntityCard.svelte";
     import QRConnect from "$lib/components/QRConnect.svelte";
+    import LabelGroupCard from "$lib/components/LabelGroupCard.svelte";
 
     let activeEntities = $derived(
         haStore.entities.filter((e) => e.area_id === haStore.activeAreaId),
     );
+
+    let displayItems = $derived.by(() => {
+        const items = [];
+        const labelGroups = new Map();
+        const unassigned = [];
+
+        activeEntities.forEach((entity) => {
+            if (entity.labels && entity.labels.length > 0) {
+                // Group by the first label
+                const label = entity.labels[0];
+                if (!labelGroups.has(label)) {
+                    labelGroups.set(label, []);
+                }
+                labelGroups.get(label).push(entity);
+            } else {
+                unassigned.push(entity);
+            }
+        });
+
+        labelGroups.forEach((groupEntities, labelName) => {
+            const booleans = groupEntities
+                .filter((e) => e.entity_id.startsWith("input_boolean."))
+                .sort((a, b) => a.entity_id.localeCompare(b.entity_id));
+            const numbers = groupEntities.filter((e) =>
+                e.entity_id.startsWith("input_number."),
+            );
+
+            if (booleans.length === 2 && numbers.length === 1) {
+                items.push({
+                    type: "label_group",
+                    id: `group_${labelName}`,
+                    label_name: labelName,
+                    number_entity: numbers[0],
+                    boolean_entities: booleans,
+                });
+
+                // Add left-over entities in the same label to unassigned
+                const usedIds = [...booleans, ...numbers].map(
+                    (e) => e.entity_id,
+                );
+                groupEntities
+                    .filter((e) => !usedIds.includes(e.entity_id))
+                    .forEach((e) => unassigned.push(e));
+            } else {
+                groupEntities.forEach((e) => unassigned.push(e));
+            }
+        });
+
+        // Ensure leftover regular dashboard entities are added
+        unassigned.forEach((e) => {
+            if (
+                ["input_boolean", "switch", "light", "input_number"].includes(
+                    e.entity_id.split(".")[0],
+                )
+            ) {
+                items.push({ type: "entity", id: e.entity_id, data: e });
+            }
+        });
+
+        return items;
+    });
 
     let isInitializing = $state(true);
     let isRecovering = false;
@@ -269,10 +331,12 @@
                 <Tabs />
 
                 <section id="dashboard-section">
-                    {#if haStore.activeAreaId && activeEntities.length > 0}
-                        {#each activeEntities as entity (entity.entity_id)}
-                            {#if ["input_boolean", "switch", "light", "input_number"].includes(entity.entity_id.split(".")[0])}
-                                <EntityCard {entity} />
+                    {#if haStore.activeAreaId && displayItems.length > 0}
+                        {#each displayItems as item (item.id)}
+                            {#if item.type === "label_group"}
+                                <LabelGroupCard group={item} />
+                            {:else}
+                                <EntityCard entity={item.data} />
                             {/if}
                         {/each}
                     {:else if haStore.activeAreaId}
