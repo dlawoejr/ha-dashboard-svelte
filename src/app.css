@@ -161,6 +161,12 @@ button:hover {
     box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
+.sidebar-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 0.5rem 0;
+}
+
 /* Content Area */
 .content-area {
     flex: 1;

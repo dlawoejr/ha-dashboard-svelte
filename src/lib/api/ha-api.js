@@ -259,4 +259,36 @@ export class HomeAssistantAPI {
     getLabelRegistry() {
         return this.sendCommand({ type: 'config/label_registry/list' });
     }
+
+    // --- REST API helper ---
+    callApi(method, endpoint, data) {
+        const httpUrl = this.url.replace('ws://', 'http://').replace('wss://', 'https://').replace('/api/websocket', '');
+        const url = `${httpUrl}/api/${endpoint}`;
+        const options = {
+            method,
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json',
+            },
+        };
+        if (data) options.body = JSON.stringify(data);
+        return fetch(url, options).then(res => res.json());
+    }
+
+    // --- Scheduler API ---
+    getSchedules() {
+        return this.sendCommand({ type: 'scheduler' });
+    }
+
+    addSchedule(data) {
+        return this.callApi('POST', 'scheduler/add', data);
+    }
+
+    editSchedule(data) {
+        return this.callApi('POST', 'scheduler/edit', data);
+    }
+
+    deleteSchedule(scheduleId) {
+        return this.callApi('POST', 'scheduler/remove', { schedule_id: scheduleId });
+    }
 }

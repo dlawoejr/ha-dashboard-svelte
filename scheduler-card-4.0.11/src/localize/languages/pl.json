@@ -1,0 +1,247 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} na {value}",
+      "action_with_parameter": "{action} z parametrem {parameter}"
+    },
+    "climate": {
+      "set_temperature": "ustaw temperaturę[ na {temperature}]",
+      "set_temperature_hvac_mode_heat": "ogrzewanie[ na {temperature}]",
+      "set_temperature_hvac_mode_cool": "chłodzenie[ na {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "ogrzewanie/chłodzenie[ na {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "ogrzewanie/chłodzenie[ {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "auto[ na {temperature}]",
+      "set_hvac_mode": "ustaw tryb[ na {hvac_mode}]",
+      "set_preset_mode": "ustaw tryb[ na {preset_mode}]",
+      "set_fan_mode": "ustaw tryb wentylatora[ na {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "zamknij",
+      "open_cover": "otwórz",
+      "set_cover_position": "ustaw pozycję[ na {position}]",
+      "set_cover_tilt_position": "ustaw kąt nachylenia[ na {tilt_position}]"
+    },
+    "fan": {
+      "set_percentage": "ustaw prędkość[ na {percentage}]",
+      "set_direction": "ustaw kierunek[ na {direction}]",
+      "oscillate": "ustaw oscylację[ na {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "ustaw wilgotność[ na {humidity}]",
+      "set_mode": "ustaw tryb[ na {mode}]"
+    },
+    "input_number": {
+      "set_value": "ustaw wartość[ na {value}]"
+    },
+    "input_select": {
+      "select_option": "wybierz opcję[ {option}]"
+    },
+    "select": {
+      "select_option": "wybierz opcję[ {option}]"
+    },
+    "light": {
+      "turn_on": "włącz[ z jasnością {brightness}]"
+    },
+    "media_player": {
+      "select_source": "wybierz źródło[ {source}]"
+    },
+    "notify": {
+      "send_message": "wyślij powiadomienie"
+    },
+    "script": {
+      "execute": "wykonaj"
+    },
+    "vacuum": {
+      "start_pause": "start / pauza"
+    },
+    "water_heater": {
+      "set_operation_mode": "ustaw tryb[ na {operation_mode}]",
+      "set_away_mode": "ustaw tryb poza domem"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "codziennie",
+          "workdays": "dni robocze",
+          "weekend": "weekend"
+        },
+        "day_types_long": {
+          "daily": "każdego dnia",
+          "workdays": "w dni robocze",
+          "weekend": "w weekend"
+        },
+        "days": "dni",
+        "tomorrow": "jutro",
+        "repeated_days": "każde {days}",
+        "repeated_days_except": "każdego dnia oprócz {excludedDays}",
+        "days_range": "od {startDay} do {endDay}",
+        "next_week_day": "w {weekday}"
+      },
+      "time": {
+        "absolute": "o {time}",
+        "interval": "od {startTime} do {endTime}",
+        "at_midnight": "o północy",
+        "at_noon": "w południe",
+        "at_sun_event": "o {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Zakończ modyfikacje",
+        "description": "Harmonogram, który zmieniłeś, jest obecnie wyłączony. Czy chcesz go włączyć?"
+      },
+      "confirm_delete": {
+        "title": "Usunąć encję?",
+        "description": "Czy na pewno chcesz usunąć tę encję?"
+      },
+      "confirm_migrate": {
+        "title": "Aktualizuj harmonogram",
+        "description": "Niektóre ustawienia zostaną utracone przy tej zmianie. Czy chcesz kontynuować?"
+      },
+      "weekday_picker": {
+        "title": "Dni powtórzeń dla harmonogramu",
+        "choose": "Wybierz..."
+      },
+      "entity_picker": {
+        "title": "Wybierz encje",
+        "choose": "Wybierz...",
+        "no_results": "Nie znaleziono pasujących elementów"
+      },
+      "action_picker": {
+        "title": "Wybierz akcję"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Harmonogram",
+        "new_schedule": "Nowy harmonogram",
+        "default_name": "Harmonogram #{id}"
+      },
+      "overview": {
+        "no_entries": "Brak elementów do wyświetlenia",
+        "backend_error": "Nie można połączyć się z komponentem harmonogramu. Musi być zainstalowany jako integracja, zanim ta karta będzie mogła być używana.",
+        "excluded_items": "{number} wykluczonych {if number is 1} element {else} elementów",
+        "hide_excluded": "ukryj wykluczone elementy",
+        "additional_tasks": "{number} dodatkowych {if number is 1} zadanie {else} zadań"
+      },
+      "editor": {
+        "repeated_days": "Powtarzane dni",
+        "start_time": "Czas rozpoczęcia",
+        "stop_time": "Czas zakończenia",
+        "action": "Akcja",
+        "add_action": "Dodaj akcję",
+        "select_timeslot": "Wybierz przedział czasowy",
+        "toggle_single_mode": "Do trybu prostego",
+        "toggle_scheme_mode": "Do trybu schematu",
+        "validation_errors": {
+          "overlapping_time": "Harmonogram ma nachodzące na siebie przedziały czasowe",
+          "missing_target_entity": "Jednej lub więcej akcji brakuje docelowej encji",
+          "missing_service_parameter": "Jednej lub więcej akcji brakuje wymaganego parametru",
+          "missing_action": "Harmonogram nie ma żadnych akcji"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Warunki",
+          "add_condition": "Dodaj warunek",
+          "new_condition": "Nowy warunek",
+          "types": {
+            "equal_to": "{entity} równa się {value}",
+            "unequal_to": "{entity} różni się od {value}",
+            "above": "{entity} jest powyżej {value}",
+            "below": "{entity} jest poniżej {value}"
+          },
+          "options": {
+            "logic_and": "Wszystkie warunki muszą być spełnione",
+            "logic_or": "Dowolny warunek musi być spełniony",
+            "track_changes": "Ponownie sprawdzaj przy zmianie warunków"
+          }
+        },
+        "period": {
+          "header": "Okres",
+          "start_date": "Od",
+          "end_date": "Do"
+        },
+        "repeat_type": "zachowanie po zakończeniu",
+        "tags": "Tagi"
+      },
+      "card_editor": {
+        "tabs": {
+          "entities": "Encje",
+          "other": "Inne"
+        },
+        "fields": {
+          "title": {
+            "heading": "Tytuł karty",
+            "options": {
+              "standard": "standardowy",
+              "hidden": "ukryty",
+              "custom": "niestandardowy"
+            },
+            "custom_title": "Niestandardowy tytuł"
+          },
+          "discover_existing": {
+            "heading": "Pokaż wszystkie harmonogramy",
+            "description": "Ustawia parametr 'discover existing'. Wcześniej utworzone harmonogramy będą automatycznie dodane do karty."
+          },
+          "time_step": {
+            "heading": "Krok czasu",
+            "description": "Rozdzielczość (w minutach) przy tworzeniu harmonogramów",
+            "unit_minutes": "min"
+          },
+          "default_editor": {
+            "heading": "Domyślny edytor czasu",
+            "options": {
+              "single": "Tryb prostego harmonogramu",
+              "scheme": "Tryb schematu czasu"
+            }
+          },
+          "sort_by": {
+            "heading": "Opcje sortowania",
+            "description": "Kolejność, w jakiej harmonogramy pojawiają się na karcie",
+            "options": {
+              "relative_time": "Czas do następnej akcji",
+              "title": "Wyświetlana nazwa harmonogramu",
+              "state": "Pokaż aktywne harmonogramy na górze"
+            }
+          },
+          "display_format_primary": {
+            "heading": "Wyświetlana główna informacja",
+            "description": "Określ, która etykieta jest używana dla harmonogramów w podglądzie",
+            "options": {
+              "default": "Nazwa harmonogramu",
+              "entity_action": "Podsumowanie zadania"
+            }
+          },
+          "display_format_secondary": {
+            "heading": "Wyświetlana dodatkowa informacja",
+            "description": "Skonfiguruj, które dodatkowe właściwości są widoczne w podglądzie",
+            "options": {
+              "relative_time": "Czas do następnej akcji",
+              "time": "Skonfigurowany czas następnej akcji",
+              "days": "Powtarzane dni tygodnia",
+              "additional_tasks": "Liczba dodatkowych zadań"
+            }
+          },
+          "show_header_toggle": {
+            "heading": "Pokaż przełącznik w nagłówku",
+            "description": "Pokaż przełącznik w nagłówku karty do włączania/wyłączania wszystkich encji"
+          },
+          "tags": {
+            "heading": "Tagi",
+            "description": "Używaj tagów do podziału harmonogramów pomiędzy wieloma kartami"
+          },
+          "entities": {
+            "button_label": "Konfiguruj zawarte encje",
+            "heading": "Zawarte encje",
+            "description": "Wybierz encje, którymi chcesz sterować za pomocą harmonogramu. Możesz kliknąć na grupę, aby ją otworzyć. Zauważ, że niektóre encje (np. sensory) mogą być używane tylko jako warunki, a nie akcje.",
+            "included_number": "{number}/{total} wybrano"
+          }
+        }
+      }
+    }
+  }
+}

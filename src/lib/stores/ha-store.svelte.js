@@ -7,6 +7,7 @@ export function createHAStore() {
     let entities = $state([]);
     let activeFloorId = $state(null);
     let activeAreaId = $state(null);
+    let activeView = $state('dashboard'); // 'dashboard' | 'scheduler'
     let currentUrl = $state('');
     let currentToken = $state('');
     let ha = null;
@@ -283,6 +284,7 @@ export function createHAStore() {
 
     function selectFloor(floorId) {
         activeFloorId = floorId;
+        activeView = 'dashboard'; // Always return to dashboard when selecting a floor
         const floorAreas = areas.filter(area => area.floor_id === floorId);
 
         if (floorAreas.length > 0) {
@@ -294,6 +296,31 @@ export function createHAStore() {
 
     function selectArea(areaId) {
         activeAreaId = areaId;
+    }
+
+    function setActiveView(view) {
+        activeView = view;
+    }
+
+    // Scheduler API wrappers
+    function getSchedules() {
+        if (!ha) return Promise.resolve([]);
+        return ha.getSchedules();
+    }
+
+    function addSchedule(data) {
+        if (!ha) return Promise.reject('Not connected');
+        return ha.addSchedule(data);
+    }
+
+    function deleteSchedule(scheduleId) {
+        if (!ha) return Promise.reject('Not connected');
+        return ha.deleteSchedule(scheduleId);
+    }
+
+    function editSchedule(data) {
+        if (!ha) return Promise.reject('Not connected');
+        return ha.editSchedule(data);
     }
 
     function updateEntityState(newState) {
@@ -359,6 +386,7 @@ export function createHAStore() {
         get entities() { return entities; },
         get activeFloorId() { return activeFloorId; },
         get activeAreaId() { return activeAreaId; },
+        get activeView() { return activeView; },
         get currentUrl() { return currentUrl; },
         get currentToken() { return currentToken; },
         initConnection,
@@ -368,10 +396,15 @@ export function createHAStore() {
         forceDisconnectForFastRecovery,
         selectFloor,
         selectArea,
+        setActiveView,
         toggleEntity,
         setNumber,
         updateEntityState,
-        updateSubscription
+        updateSubscription,
+        getSchedules,
+        addSchedule,
+        deleteSchedule,
+        editSchedule,
     };
 }
 

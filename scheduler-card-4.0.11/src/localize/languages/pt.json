@@ -1,0 +1,173 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} para {value}",
+      "action_with_parameter": "{action} com {parameter}"
+    },
+    "climate": {
+      "set_temperature": "definir temperatura[ para {temperature}]",
+      "set_temperature_hvac_mode_heat": "aquecimento[ para {temperature}]",
+      "set_temperature_hvac_mode_cool": "arrefecimento[ para {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "aquecimento/arrefecimento[ para {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "aquecimento/arrefecimento[ para {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "auto[ para {temperature}]",
+      "set_hvac_mode": "definir modo[ para {hvac_mode}]",
+      "set_preset_mode": "definir predefinição[ {preset_mode}]",
+      "set_fan_mode": "definir modo ventoinha[ para {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "fechar",
+      "open_cover": "abrir",
+      "set_cover_position": "definir posição[ para {position}]",
+      "set_cover_tilt_position": "definir inclinação[ como {tilt_position}]"
+    },
+    "fan": {
+      "set_speed": "definir velocidade[ para {speed}]",
+      "set_direction": "definir direção[ para {direction}]",
+      "oscillate": "definir oscilação[ para {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "definir humidade[ para {humidity}]",
+      "set_mode": "definir modo[ para {mode}]"
+    },
+    "input_number": {
+      "set_value": "definir valor[ para {value}]"
+    },
+    "input_select": {
+      "select_option": "selecionar opção[ {option}]"
+    },
+    "select": {
+      "select_option": "selecionar opção[ {option}]"
+    },
+    "light": {
+      "turn_on": "ligar[ com {brightness} brightness]"
+    },
+    "media_player": {
+      "select_source": "selecionar origem[ {source}]"
+    },
+    "notify": {
+      "send_message": "enviar notificação"
+    },
+    "script": {
+      "execute": "executar"
+    },
+    "vacuum": {
+      "start_pause": "iniciar / pausar"
+    },
+    "water_heater": {
+      "set_operation_mode": "definir modo[ para {operation_mode}]",
+      "set_away_mode": "definir modo ausente"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "todos",
+          "workdays": "semana de trabalho",
+          "weekend": "fim-de-semana"
+        },
+        "day_types_long": {
+          "daily": "todos os dias",
+          "workdays": "em dias de semana",
+          "weekend": "no fim-de-semana"
+        },
+        "days": "dias",
+        "tomorrow": "amanhã",
+        "repeated_days": "a cada {days}",
+        "repeated_days_except": "a cada dia exceto {excludedDays}",
+        "days_range": "até {startDay} até {endDay}",
+        "next_week_day": "próximo {weekday}"
+      },
+      "time": {
+        "absolute": "Às {time}",
+        "interval": "das {startTime} às {endTime}",
+        "at_midnight": "ao meia-noite",
+        "at_noon": "ao meio-dia",
+        "at_sun_event": "ao {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Conclua as modificações",
+        "description": "A programação que foi alterada está atualmente desabilitada, deveria ser habilitada?"
+      },
+      "confirm_delete": {
+        "title": "Remover a entidade?",
+        "description": "Tem a certeza que deseja remover esta entidade?"
+      },
+      "confirm_migrate": {
+        "title": "Modificar horário",
+        "description": "Algumas configurações serão perdidas por esta ação. Você quer prosseguir?"
+      },
+      "weekday_picker": {
+        "title": "Repetições semanais",
+        "choose": "Escolha..."
+      },
+      "entity_picker": {
+        "title": "Escolha entidades",
+        "choose": "Escolha...",
+        "no_results": "Sem resultados"
+      },
+      "action_picker": {
+        "title": "Escolha a acção"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Agenda",
+        "new_schedule": "Novo horário",
+        "default_name": "Horário #{id}"
+      },
+      "overview": {
+        "no_entries": "Não existem itens a mostrar",
+        "backend_error": "Não consegui ligar ao componente de agendamento. Essa integração tem que ser instalada antes da utilização deste cartão.",
+        "excluded_items": "{number}{if number is 1} item excluído {else} itens excluídos",
+        "hide_excluded": "ocultar itens excluídos",
+        "additional_tasks": "Mais {number} {if number is 1} tarefa {else} tarefas"
+      },
+      "editor": {
+        "repeated_days": "Repetições semanais",
+        "start_time": "Hora início",
+        "stop_time": "Hora fim",
+        "action": "Acção",
+        "add_action": "Acrescentar acção",
+        "select_timeslot": "Selecionar um período horário",
+        "toggle_single_mode": "Para modo simples",
+        "toggle_scheme_mode": "Para modo esquema",
+        "validation_errors": {
+          "overlapping_time": "O Horário tem sobreposições",
+          "missing_target_entity": "Uma ou mais acções sem entidade definida",
+          "missing_service_parameter": "Unma ou mais acções sem uma definição obrigatória",
+          "missing_action": "O Horário não tem acções"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Condições",
+          "add_condition": "Acrescentar condição",
+          "new_condition": "Nova condição",
+          "types": {
+            "equal_to": "{entity} igual a {value}",
+            "unequal_to": "{entity} diferente de {value}",
+            "above": "{entity} acima de {value}",
+            "below": "{entity} abaixo de {value}"
+          },
+          "options": {
+            "logic_and": "Todas as condições têm de ser verdadeiras",
+            "logic_or": "Uma das condições tem de ser verdadeira",
+            "track_changes": "Reavaliar em caso de alterações"
+          }
+        },
+        "period": {
+          "header": "Período",
+          "start_date": "Desde",
+          "end_date": "Até"
+        },
+        "repeat_type": "Comportamento após a conclusão",
+        "tags": "Etiquetas"
+      }
+    }
+  }
+}

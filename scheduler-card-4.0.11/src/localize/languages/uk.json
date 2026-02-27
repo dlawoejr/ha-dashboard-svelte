@@ -1,0 +1,173 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} до {value}",
+      "action_with_parameter": "{action} з {parameter}"
+    },
+    "climate": {
+      "set_temperature": "встановити температуру[ to {temperature}]",
+      "set_temperature_hvac_mode_heat": "нагрів[ to {temperature}]",
+      "set_temperature_hvac_mode_cool": "охолодження[ to {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "нагрів/охолодження[ to {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "нагрів/охолодження[ to {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "aвтоматичний[ to {temperature}]",
+      "set_hvac_mode": "встановити режим[ to {hvac_mode}]",
+      "set_preset_mode": "вибрати пресет[ to {preset_mode}]",
+      "set_fan_mode": "set fan mode[ to {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "закрити",
+      "open_cover": "відкрити",
+      "set_cover_position": "встановити позицію[ to {position}]",
+      "set_cover_tilt_position": "set tilt position[ to {tilt_position}]"
+    },
+    "fan": {
+      "set_speed": "встановити швидкість[ to {speed}]",
+      "set_direction": "встановити напрямок[ to {direction}]",
+      "oscillate": "встановити коливання[ to {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "встановити вологість[ to {humidity}]",
+      "set_mode": "встановити режим[ to {mode}]"
+    },
+    "input_number": {
+      "set_value": "встановити значення[ to {value}]"
+    },
+    "input_select": {
+      "select_option": "встановити опцію[ {option}]"
+    },
+    "select": {
+      "select_option": "встановити опцію[ {option}]"
+    },
+    "light": {
+      "turn_on": "увімкнути[ з {brightness} якскравістю]"
+    },
+    "media_player": {
+      "select_source": "вибрати джерело[ {source}]"
+    },
+    "notify": {
+      "send_message": "send notification"
+    },
+    "script": {
+      "execute": "виконати"
+    },
+    "vacuum": {
+      "start_pause": "старт / пауза"
+    },
+    "water_heater": {
+      "set_operation_mode": "встановити режим[ to {operation_mode}]",
+      "set_away_mode": "встановити режим Не вдома"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "щоденно",
+          "workdays": "робочі дні",
+          "weekend": "вихідні"
+        },
+        "day_types_long": {
+          "daily": "кожного дня",
+          "workdays": "в робочі дні",
+          "weekend": "по вихідних"
+        },
+        "days": "дні",
+        "tomorrow": "завтра",
+        "repeated_days": "кожні {days}",
+        "repeated_days_except": "кожного дня окрім {excludedDays}",
+        "days_range": "з {startDay} до {endDay}",
+        "next_week_day": "наступної {weekday}"
+      },
+      "time": {
+        "absolute": "о {time}",
+        "interval": "з {startTime} до {endTime}",
+        "at_midnight": "опівночі",
+        "at_noon": "опівдні",
+        "at_sun_event": "о {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Завершіть зміни",
+        "description": "Розклад, який було змінено, наразі вимкнено, чи потрібно його ввімкнути?"
+      },
+      "confirm_delete": {
+        "title": "Видалити сутність?",
+        "description": "Ви дійсно бажаєте видалити цю сутність?"
+      },
+      "confirm_migrate": {
+        "title": "Змінити розклад",
+        "description": "У результаті цієї дії деякі налаштування буде втрачено. Ви бажаєте продовжити?"
+      },
+      "weekday_picker": {
+        "title": "Repeated days for schedule",
+        "choose": "Choose..."
+      },
+      "entity_picker": {
+        "title": "Choose entities",
+        "choose": "Choose...",
+        "no_results": "No matching items found"
+      },
+      "action_picker": {
+        "title": "Choose action"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Планувальник",
+        "new_schedule": "Новий розклад",
+        "default_name": "Розклад #{id}"
+      },
+      "overview": {
+        "no_entries": "Елементи відсутні",
+        "backend_error": "Не вдалося підключитися до компонента планувальника. Перш ніж використовувати цю карту, її потрібно встановити як інтеграцію.",
+        "excluded_items": "{number} виключено {if number is 1} елемент {else} елементів",
+        "hide_excluded": "сховати виключені елементи",
+        "additional_tasks": "{number} більше {if number is 1} завдання {else} завдань"
+      },
+      "editor": {
+        "repeated_days": "Repeated days",
+        "start_time": "Start time",
+        "stop_time": "End time",
+        "action": "Action",
+        "add_action": "Add action",
+        "select_timeslot": "Спершу виберіть часовий проміжок",
+        "toggle_single_mode": "До одиночного режиму",
+        "toggle_scheme_mode": "До схемного режиму",
+        "validation_errors": {
+          "overlapping_time": "Schedule has overlapping timeslots",
+          "missing_target_entity": "One or more actions are missing a target entity",
+          "missing_service_parameter": "One or more actions are missing a required setting",
+          "missing_action": "Schedule has no actions"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Conditions",
+          "add_condition": "Add condition",
+          "new_condition": "New condition",
+          "types": {
+            "equal_to": "{entity} is equal to {value}",
+            "unequal_to": "{entity} is unequal to {value}",
+            "above": "{entity} is above {value}",
+            "below": "{entity} is below {value}"
+          },
+          "options": {
+            "logic_and": "All conditions must be true",
+            "logic_or": "Any condition must be true",
+            "track_changes": "Re-evaluate when conditions change"
+          }
+        },
+        "period": {
+          "header": "період",
+          "start_date": "From",
+          "end_date": "To"
+        },
+        "repeat_type": "поведінка після спрацювання",
+        "tags": "Tags"
+      }
+    }
+  }
+}

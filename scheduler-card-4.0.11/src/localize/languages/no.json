@@ -1,0 +1,173 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} til {value}",
+      "action_with_parameter": "{action} med {parameter}"
+    },
+    "climate": {
+      "set_temperature": "sett temperatur[ til {temperature}]",
+      "set_temperature_hvac_mode_heat": "oppvarming[ til {temperature}]",
+      "set_temperature_hvac_mode_cool": "kjøling[ til {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "oppvarming/kjøling[ til {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "oppvarming/kjøling[ til {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "auto[ til {temperature}]",
+      "set_hvac_mode": "sett modus[ til {hvac_mode}]",
+      "set_preset_mode": "sett forhåndsvalg[ {preset_mode}]",
+      "set_fan_mode": "set fan mode[ to {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "lukk",
+      "open_cover": "åpne",
+      "set_cover_position": "sett posisjon[ til {position}]",
+      "set_cover_tilt_position": "sett vippestilling[ til {tilt_position}]"
+    },
+    "fan": {
+      "set_speed": "sett hastighet[ til {speed}]",
+      "set_direction": "sett retning[ til {direction}]",
+      "oscillate": "sett svingning[ til {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "sett luftfuktighet[ til {humidity}]",
+      "set_mode": "sett modus[ til {mode}]"
+    },
+    "input_number": {
+      "set_value": "sett verdi[ til {value}]"
+    },
+    "input_select": {
+      "select_option": "velg[ {option}]"
+    },
+    "select": {
+      "select_option": "velg[ {option}]"
+    },
+    "light": {
+      "turn_on": "slå på[ med {brightness} lysstyrke]"
+    },
+    "media_player": {
+      "select_source": "velg kilde[ {source}]"
+    },
+    "notify": {
+      "send_message": "send notifikasjon"
+    },
+    "script": {
+      "execute": "utfør"
+    },
+    "vacuum": {
+      "start_pause": "start / pause"
+    },
+    "water_heater": {
+      "set_operation_mode": "sett modus[ til {operation_mode}]",
+      "set_away_mode": "sett bortemodus"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "hver dag",
+          "workdays": "ukedager",
+          "weekend": "helg"
+        },
+        "day_types_long": {
+          "daily": "hver dag",
+          "workdays": "ukedager",
+          "weekend": "helg"
+        },
+        "days": "Dager",
+        "tomorrow": "imorgen",
+        "repeated_days": "hver {days}",
+        "repeated_days_except": "hver dag unntatt {excludedDays}",
+        "days_range": "fra {startDay} til {endDay}",
+        "next_week_day": "neste {weekday}"
+      },
+      "time": {
+        "absolute": "kl. {time}",
+        "interval": "fra {startTime} til {endTime}",
+        "at_midnight": "ved midnatt",
+        "at_noon": "kl. 12.00",
+        "at_sun_event": "ved {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Fullfør endringene",
+        "description": "Tidsplanen som er endret er for øyeblikket deaktivert, bør den være aktivert?"
+      },
+      "confirm_delete": {
+        "title": "Vil du fjerne entiteten?",
+        "description": "Er du sikker på at du vil fjerne denne entiteten?"
+      },
+      "confirm_migrate": {
+        "title": "Endre tidsplanen",
+        "description": "Noen innstillinger vil gå tapt ved denne handlingen. Vil du fortsette?"
+      },
+      "weekday_picker": {
+        "title": "Repeated days for schedule",
+        "choose": "Choose..."
+      },
+      "entity_picker": {
+        "title": "Choose entities",
+        "choose": "Choose...",
+        "no_results": "No matching items found"
+      },
+      "action_picker": {
+        "title": "Choose action"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Tidsplan",
+        "new_schedule": "Ny tidsplan",
+        "default_name": "Tidsplan #{id}"
+      },
+      "overview": {
+        "no_entries": "Det er ingen definerte tidsplaner å vise",
+        "backend_error": "Kunne ikke koble til tidsplankomponenten. Den må installeres som en integrasjon før dette kortet kan benyttes.",
+        "excluded_items": "{number} ekskludert {if number is 1} element {else} elementer",
+        "hide_excluded": "skjul ekskluderte elementer",
+        "additional_tasks": "{number} flere {if number is 1} oppgaver {else} oppgaver"
+      },
+      "editor": {
+        "repeated_days": "Repeated days",
+        "start_time": "Start time",
+        "stop_time": "End time",
+        "action": "Action",
+        "add_action": "Add action",
+        "select_timeslot": "Velg tidsluke",
+        "toggle_single_mode": "Til enkel modus",
+        "toggle_scheme_mode": "Til skjemamodus",
+        "validation_errors": {
+          "overlapping_time": "Schedule has overlapping timeslots",
+          "missing_target_entity": "One or more actions are missing a target entity",
+          "missing_service_parameter": "One or more actions are missing a required setting",
+          "missing_action": "Schedule has no actions"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Conditions",
+          "add_condition": "Add condition",
+          "new_condition": "New condition",
+          "types": {
+            "equal_to": "{entity} is equal to {value}",
+            "unequal_to": "{entity} is unequal to {value}",
+            "above": "{entity} is above {value}",
+            "below": "{entity} is below {value}"
+          },
+          "options": {
+            "logic_and": "All conditions must be true",
+            "logic_or": "Any condition must be true",
+            "track_changes": "Re-evaluate when conditions change"
+          }
+        },
+        "period": {
+          "header": "Periode",
+          "start_date": "From",
+          "end_date": "To"
+        },
+        "repeat_type": "oppførsel etter fullføring",
+        "tags": "Tags"
+      }
+    }
+  }
+}

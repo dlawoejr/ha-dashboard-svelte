@@ -163,3 +163,48 @@ Home Assistant의 **레이블(Label)** 정보를 활용하여 동일 레이블�
 | `src/routes/+page.svelte` | 수정 | 그룹핑 derived state 및 조건부 렌더링 |
 | `src/lib/components/LabelGroupCard.svelte` | **신규** | 복합 카드 컴포넌트 (게이지+드래그 스위치) |
 
+---
+
+## ⏰ 스케줄러(Scheduler) 카드 구현 및 트러블슈팅
+
+> 작업일: 2026-02-27
+
+### 🎯 목표
+
+Home Assistant의 커스텀 스케줄러 컴포넌트(`scheduler-component`)와 연동하여, 대시보드 내에서 손쉽게 **기기 스케줄(예약) 추가/수정/삭제/활성화** 관리를 할 수 있는 UI를 제공한다.
+
+### 📋 구현 내용
+
+#### 1. REST API 확장 (`ha-api.js`)
+- `callApi(method, endpoint, data)`: WebSocket 대신 REST API 호출 래퍼 추가
+- `getSchedules()`, `addSchedule()`, `editSchedule()`, `deleteSchedule()` 메서드 노출
+
+#### 2. 스토어 연동 (`ha-store.svelte.js`)
+- `activeView` 상태 변수 추가 (`'dashboard'` ↔ `'scheduler'` 화면 전환)
+- `addSchedule`, `editSchedule`, `deleteSchedule`, `toggleEntity` 지원 래퍼 함수 매핑
+
+#### 3. 스케줄러 UI 개발 (`SchedulerCard.svelte`)
+- **생성/수정 모드**: 기기(`input_boolean`) 선택, 액션(ON/OFF), 시간 및 요일 선택 폼 제공
+- **목록 모드**: 등록된 스케줄 목록 조회 및 개별 활성화/비활성화 스위치, 삭제 버튼 제공
+
+### 🛠️ 주요 트러블슈팅
+
+1. **"이 구성요소는 현재 사용할 수 없습니다(Unavailable)" 상태 지연 이슈**
+   - **증상:** 스케줄러 생성 버튼을 누른 후 약 5초간 UI 상 예약 카드가 회색(비활성)으로 표시되고 사용할 수 없는 오류.
+   - **원인 분석:**
+     - 백엔드(`scheduler/timer.py`, `scheduler/store.py` 분석 결과)에서 스케줄 생성 직후 타임스탬프(`next_entry`)를 비동기로 재계산함.
+     - 이 과정이 완전히 종료되기 전까지 찰나의 순간 동안, 타이머 리스트 배열이 비어있어 상태가 `unavailable`로 강제 할당됨.
+   - **해결 방안:** UI 상 에러가 아닌 백엔드 처리 딜레이 구조로 판명되어, 데이터 이상 없이 정상 작동함을 증명. 약 5~10초 후 자동 동기화 시 정상 활성화됨.
+
+2. **500 Internal Server Error (JSON 파싱 에러)**
+   - **증상:** HA 백엔드 검증 로직에 명시적 `null` 값을 일일이 넘겨주려 시도 중 `save_schedule` 스키마 오류 발생.
+   - **해결 방안:** 공식 카드와 동일한 시그니처(`["daily"]`, `"08:00:00"`)만 보내도록 페이로드 구성 로직을 롤백하여 정상 동작 복구.
+
+### 📁 변경된 파일
+
+| 파일 | 변경 유형 | 역할 |
+|---|---|---|
+| `src/lib/api/ha-api.js` | 수정 | 스케줄러 관련 REST 래퍼 함수 추가 |
+| `src/lib/stores/ha-store.svelte.js` | 수정 | 뷰 전환 상태 및 스케줄러 조작 액션 매핑 |
+| `src/routes/+page.svelte` | 수정 | `activeView` 기반 조건부 화면 전환 적용 |
+| `src/lib/components/SchedulerCard.svelte` | **신규** | 자체 제작 스케줄 관리 카드 컴포넌트 |

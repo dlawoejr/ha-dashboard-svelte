@@ -1,0 +1,247 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} na {value}",
+      "action_with_parameter": "{action} s {parameter}"
+    },
+    "climate": {
+      "set_temperature": "nastaviť teplotu[ na {temperature}]",
+      "set_temperature_hvac_mode_heat": "vykurovanie[ na {temperature}]",
+      "set_temperature_hvac_mode_cool": "chladenie[ na {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "vykurovanie/chladenie[ na {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "vykurovanie/chladenie[ na {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "automatika[ na {temperature}]",
+      "set_hvac_mode": "nastaviť režim[ na {hvac_mode}]",
+      "set_preset_mode": "nastaviť predvoľbu[ {preset_mode}]",
+      "set_fan_mode": "nastaviť režim ventilátora[ to {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "zatvoriť",
+      "open_cover": "otvoriť",
+      "set_cover_position": "nastaviť polohu[ na {position}]",
+      "set_cover_tilt_position": "nastaviť naklonenie[ na {tilt_position}]"
+    },
+    "fan": {
+      "set_speed": "nastaviť rýchlosť[ na {speed}]",
+      "set_direction": "nastaviť smer[ na {direction}]",
+      "oscillate": "nastaviť osciláciu[ na {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "nastaviť vlhkosť[ na {humidity}]",
+      "set_mode": "nastaviť režim[ na {mode}]"
+    },
+    "input_number": {
+      "set_value": "nastaviť hodnotu[ na {value}]"
+    },
+    "input_select": {
+      "select_option": "vybrať možnosť[ {option}]"
+    },
+    "select": {
+      "select_option": "vybrať možnosť[ {option}]"
+    },
+    "light": {
+      "turn_on": "zapnúť[ na {brightness} jas]"
+    },
+    "media_player": {
+      "select_source": "vybrať zdroj[ {source}]"
+    },
+    "notify": {
+      "send_message": "poslať notifikáciu"
+    },
+    "script": {
+      "execute": "spustiť"
+    },
+    "vacuum": {
+      "start_pause": "štart / pauza"
+    },
+    "water_heater": {
+      "set_operation_mode": "nastaviť režim[ na {operation_mode}]",
+      "set_away_mode": "nastaviť režim neprítomnosti"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "denne",
+          "workdays": "pracovné dni",
+          "weekend": "víkendy"
+        },
+        "day_types_long": {
+          "daily": "každý deň",
+          "workdays": "cez pracovné dni",
+          "weekend": "cez víkend"
+        },
+        "days": "dni",
+        "tomorrow": "zajtra",
+        "repeated_days": "každý {days}",
+        "repeated_days_except": "každý deň okrem {excludedDays}",
+        "days_range": "od {startDay} do {endDay}",
+        "next_week_day": "budúcu {weekday}"
+      },
+      "time": {
+        "absolute": "od {time}",
+        "interval": "od {startTime} do {endTime}",
+        "at_midnight": "od polnoci",
+        "at_noon": "od obeda",
+        "at_sun_event": "na {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Dokončite úpravy",
+        "description": "Plán, ktorý sa zmenil, je momentálne zakázaný, chcete ho povoliť?"
+      },
+      "confirm_delete": {
+        "title": "Odstrániť entitu?",
+        "description": "Naozaj chcete odstrániť túto entitu?"
+      },
+      "confirm_migrate": {
+        "title": "Aktualizovať plán",
+        "description": "Touto akciou sa stratia niektoré nastavenia. Chcete pokračovať?"
+      },
+      "weekday_picker": {
+        "title": "Dni opakovania pre plán",
+        "choose": "Vyberte..."
+      },
+      "entity_picker": {
+        "title": "Vyberte entity",
+        "choose": "Vyberte...",
+        "no_results": "Žiadne vyhovujúce položky neboli nájdené"
+      },
+      "action_picker": {
+        "title": "Vyberte akciu"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Plánovač",
+        "new_schedule": "Nový plán",
+        "default_name": "Plán #{id}"
+      },
+      "overview": {
+        "no_entries": "Žiadne položky na zobrazenie",
+        "backend_error": "Nepodarilo sa pripojiť ku komponentu Scheduler. Pred tým, ako použijete túto kartu ho musíte nainštalovať ako integráciu.",
+        "excluded_items": "Vylúčené položky: {number}",
+        "hide_excluded": "skryť vylúčené položky",
+        "additional_tasks": "Ďalšie úlohy: {number}"
+      },
+      "editor": {
+        "repeated_days": "Dni opakovania",
+        "start_time": "Čas začiatku",
+        "stop_time": "Čas konca",
+        "action": "Akcia",
+        "add_action": "Pridať akciu",
+        "select_timeslot": "Najprv vyberte časový úsek",
+        "toggle_single_mode": "Do režimu jedného",
+        "toggle_scheme_mode": "Do režimu schémy",
+        "validation_errors": {
+          "overlapping_time": "Plán obsahuje prekrývajúce sa časové intervaly",
+          "missing_target_entity": "Pre aspoň jednu akciu nie je zadaná cieľová entita",
+          "missing_service_parameter": "Pre aspoň jednu akciu nie je zadané vyžadované nastavenie",
+          "missing_action": "Plán neobsahuje žiadne akcie"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Podmienky",
+          "add_condition": "Pridať podmienku",
+          "new_condition": "Nová podmienka",
+          "types": {
+            "equal_to": "{entity} sa rovná {value}",
+            "unequal_to": "{entity} sa nerovná {value}",
+            "above": "{entity} je nad {value}",
+            "below": "{entity} je pod {value}"
+          },
+          "options": {
+            "logic_and": "Všetky podmienky musia platiť",
+            "logic_or": "Akákoľvek podmienka musí platiť",
+            "track_changes": "Prehodnoťte, keď sa zmenia podmienky"
+          }
+        },
+        "period": {
+          "header": "Obdobie",
+          "start_date": "Od",
+          "end_date": "Do"
+        },
+        "repeat_type": "správanie sa po spustení",
+        "tags": "Štítky"
+      },
+      "card_editor": {
+        "tabs": {
+          "entities": "Entity",
+          "other": "Iné"
+        },
+        "fields": {
+          "title": {
+            "heading": "Názov karty",
+            "options": {
+              "standard": "štandardné",
+              "hidden": "skryté",
+              "custom": "vlastné"
+            },
+            "custom_title": "Vlastný názov"
+          },
+          "discover_existing": {
+            "heading": "Zobraziť všetky plány",
+            "description": "Tým sa nastaví parameter „objaviť existujúce“. Predtým vytvorené plány sa automaticky pridajú na kartu."
+          },
+          "time_step": {
+            "heading": "Časový krok",
+            "description": "Rozlíšenie (v minútach) pre vytváranie plánov",
+            "unit_minutes": "min"
+          },
+          "default_editor": {
+            "heading": "Predvolený editor času",
+            "options": {
+              "single": "Režim jedného plánu",
+              "scheme": "Režim schémy"
+            }
+          },
+          "sort_by": {
+            "heading": "Možnosti triedenia",
+            "description": "Poradie, v akom sa rozvrhy zobrazujú na karte",
+            "options": {
+              "relative_time": "Zostávajúci čas do ďalšej akcie",
+              "title": "Zobrazený názov rozvrhu",
+              "state": "Zobraziť aktívne plány navrchu"
+            }
+          },
+          "display_format_primary": {
+            "heading": "Zobrazené primárne informácie",
+            "description": "V prehľade nakonfigurujte, ktorý štítok sa použije pre plány",
+            "options": {
+              "default": "Názov rozvrhu",
+              "entity_action": "Zhrnutie úlohy"
+            }
+          },
+          "display_format_secondary": {
+            "heading": "Zobrazené sekundárne informácie",
+            "description": "Nakonfigurujte, ktoré ďalšie vlastnosti sú viditeľné v prehľade",
+            "options": {
+              "relative_time": "Zostávajúci čas do ďalšej akcie",
+              "time": "Nastavený čas pre ďalšiu akciu",
+              "days": "Opakované dni v týždni",
+              "additional_tasks": "Počet dodatočných úloh"
+            }
+          },
+          "show_header_toggle": {
+            "heading": "Zobraziť prepínač hlavičky",
+            "description": "Zobraziť prepínač v hornej časti karty na povolenie/zakázanie všetkých entít"
+          },
+          "tags": {
+            "heading": "Štítky",
+            "description": "Použite štítky na rozdelenie plánov medzi viacero kariet"
+          },
+          "entities": {
+            "button_label": "Konfigurácia zahrnutých entít",
+            "heading": "Zahrnuté entity",
+            "description": "Vyberte entity, ktoré chcete ovládať pomocou plánovača. Kliknutím na skupinu ju otvoríte. Upozorňujeme, že niektoré entity (napríklad senzory) možno použiť iba na podmienky, nie na akcie.",
+            "included_number": "{number}/{total} vybraný"
+          }
+        }
+      }
+    }
+  }
+}

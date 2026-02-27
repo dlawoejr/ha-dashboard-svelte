@@ -7,6 +7,7 @@
     import EntityCard from "$lib/components/EntityCard.svelte";
     import QRConnect from "$lib/components/QRConnect.svelte";
     import LabelGroupCard from "$lib/components/LabelGroupCard.svelte";
+    import SchedulerCard from "$lib/components/SchedulerCard.svelte";
 
     let activeEntities = $derived(
         haStore.entities.filter((e) => e.area_id === haStore.activeAreaId),
@@ -328,23 +329,27 @@
             <Sidebar />
 
             <main class="content-area">
-                <Tabs />
+                {#if haStore.activeView === "scheduler"}
+                    <SchedulerCard />
+                {:else}
+                    <Tabs />
 
-                <section id="dashboard-section">
-                    {#if haStore.activeAreaId && displayItems.length > 0}
-                        {#each displayItems as item (item.id)}
-                            {#if item.type === "label_group"}
-                                <LabelGroupCard group={item} />
-                            {:else}
-                                <EntityCard entity={item.data} />
-                            {/if}
-                        {/each}
-                    {:else if haStore.activeAreaId}
-                        <div style="color: #64748b; padding: 1rem;">
-                            No supported entities found in this area.
-                        </div>
-                    {/if}
-                </section>
+                    <section id="dashboard-section">
+                        {#if haStore.activeAreaId && displayItems.length > 0}
+                            {#each displayItems as item (item.id)}
+                                {#if item.type === "label_group"}
+                                    <LabelGroupCard group={item} />
+                                {:else}
+                                    <EntityCard entity={item.data} />
+                                {/if}
+                            {/each}
+                        {:else if haStore.activeAreaId}
+                            <div style="color: #64748b; padding: 1rem;">
+                                No supported entities found in this area.
+                            </div>
+                        {/if}
+                    </section>
+                {/if}
             </main>
         </div>
     {/if}

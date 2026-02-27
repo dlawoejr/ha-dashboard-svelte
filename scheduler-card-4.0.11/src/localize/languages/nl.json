@@ -1,0 +1,247 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} naar {value}",
+      "action_with_parameter": "{action} met {parameter}"
+    },
+    "climate": {
+      "set_temperature": "temperatuur instellen[ naar {temperature}]",
+      "set_temperature_hvac_mode_heat": "verwarmen[ naar {temperature}]",
+      "set_temperature_hvac_mode_cool": "koelen[ naar {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "verwarmen/koelen[ naar {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "verwarmen/koelen[ naar {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "automatisch[ naar {temperature}]",
+      "set_hvac_mode": "modus aanpassen[ naar {hvac_mode}]",
+      "set_preset_mode": "programma[ {preset_mode}] instellen",
+      "set_fan_mode": "ventilatiemodus aanpassen[ naar {fan_mode}]",
+      "set_swing_mode": "oscillatiemodus aanpassen[ naar {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "sluiten",
+      "open_cover": "openen",
+      "set_cover_position": "positie instellen[ naar {position}]",
+      "set_cover_tilt_position": "hellingshoek instellen[ naar {tilt_position}]"
+    },
+    "fan": {
+      "set_percentage": "snelheid instellen[ op {percentage}]",
+      "set_direction": "richting instellen[ naar {direction}]",
+      "oscillate": "zet oscillatie[ naar {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "luchtvochtigheid instellen [ op {humidity}]",
+      "set_mode": "modus aanpassen[ naar {mode}]"
+    },
+    "input_number": {
+      "set_value": "waarde aanpassen[ naar {value}]"
+    },
+    "input_select": {
+      "select_option": "selecteer optie[ {option}]"
+    },
+    "select": {
+      "select_option": "selecteer optie[ {option}]"
+    },
+    "light": {
+      "turn_on": "inschakelen[ met {brightness} helderheid]"
+    },
+    "media_player": {
+      "select_source": "kies ingang[ {source}]"
+    },
+    "notify": {
+      "send_message": "notificatie sturen"
+    },
+    "script": {
+      "execute": "uitvoeren"
+    },
+    "vacuum": {
+      "start_pause": "start / pauzeer"
+    },
+    "water_heater": {
+      "set_operation_mode": "modus aanpassen[ naar {operation_mode}]",
+      "set_away_mode": "stel afwezigheidsmode in"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "dagelijks",
+          "workdays": "werkdagen",
+          "weekend": "weekend"
+        },
+        "day_types_long": {
+          "daily": "iedere dag",
+          "workdays": "doordeweeks",
+          "weekend": "in het weekend"
+        },
+        "days": "dagen",
+        "tomorrow": "morgen",
+        "repeated_days": "elke {days}",
+        "repeated_days_except": "elke dag behalve {excludedDays}",
+        "days_range": "van {startDay} tot {endDay}",
+        "next_week_day": "volgende week {weekday}"
+      },
+      "time": {
+        "absolute": "om {time}",
+        "interval": "van {startTime} tot {endTime}",
+        "at_midnight": "om middernacht",
+        "at_noon": "om 12:00",
+        "at_sun_event": "bij {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Wijzigingen voltooid",
+        "description": "Deze planning is momenteel gedeactiveerd. Dient deze te worden ingeschakeld?"
+      },
+      "confirm_delete": {
+        "title": "Entiteit verwijderen?",
+        "description": "Weet je zeker dat je dit item wilt verwijderen?"
+      },
+      "confirm_migrate": {
+        "title": "Schema bijwerken",
+        "description": "Door deze actie gaan vorige instellingen verloren. Wil je doorgaan?"
+      },
+      "weekday_picker": {
+        "title": "Herhaalde dagen voor tijdschema",
+        "choose": "Kies..."
+      },
+      "entity_picker": {
+        "title": "Kies entiteiten",
+        "choose": "Kies...",
+        "no_results": "Geen overeenkomstige items gevonden"
+      },
+      "action_picker": {
+        "title": "Kies actie"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Tijdplanner",
+        "new_schedule": "Nieuw schema",
+        "default_name": "Schema #{id}"
+      },
+      "overview": {
+        "no_entries": "Er zijn geen items aangemaakt",
+        "backend_error": "Er kon geen verbinding worden gemaakt met het Scheduler component. Deze moet als integratie zijn geinstalleerd voordat deze kaart gebruikt kan worden.",
+        "excluded_items": "{number} uitgesloten {if number is 1} item {else} items",
+        "hide_excluded": "verberg uitgesloten items",
+        "additional_tasks": "{number} overige {if number is 1} taak {else} taken"
+      },
+      "editor": {
+        "repeated_days": "Herhaling",
+        "start_time": "Starttijd",
+        "stop_time": "Eindtijd",
+        "action": "Actie",
+        "add_action": "Actie toevoegen",
+        "select_timeslot": "Selecteer een tijdslot...",
+        "toggle_single_mode": "Naar enkele modus",
+        "toggle_scheme_mode": "Naar schema modus",
+        "validation_errors": {
+          "overlapping_time": "Schedule has overlapping timeslots",
+          "missing_target_entity": "One or more actions are missing a target entity",
+          "missing_service_parameter": "One or more actions are missing a required setting",
+          "missing_action": "Schedule has no actions"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Condities",
+          "add_condition": "Conditie toevoegen",
+          "new_condition": "Nieuwe conditie",
+          "types": {
+            "equal_to": "{entity} is gelijk aan {value}",
+            "unequal_to": "{entity} is ongelijk aan {value}",
+            "above": "{entity} is hoger dan {value}",
+            "below": "{entity} is lager dan {value}"
+          },
+          "options": {
+            "logic_and": "Alle condities moeten zijn voldaan",
+            "logic_or": "Een van de condities moet zijn voldaan",
+            "track_changes": "Herevalueer als de condities veranderen"
+          }
+        },
+        "period": {
+          "header": "Periode",
+          "start_date": "Vanaf",
+          "end_date": "Tot"
+        },
+        "repeat_type": "Gedrag na voltooiing",
+        "tags": "Tags"
+      },
+      "card_editor": {
+        "tabs": {
+          "entities": "Entiteiten",
+          "other": "Overig"
+        },
+        "fields": {
+          "title": {
+            "heading": "Titel van de kaart",
+            "options": {
+              "standard": "standaard",
+              "hidden": "verborgen",
+              "custom": "anders"
+            },
+            "custom_title": "Eigen titel"
+          },
+          "discover_existing": {
+            "heading": "Alle schema's tonen",
+            "description": "Hiermee wordt de 'discover existing' instelling geactiveerd. Eerder aangemaakte schema's zullen automatisch worden weergegeven."
+          },
+          "time_step": {
+            "heading": "Stapgrootte voor tijd",
+            "description": "Resolutie (in minuten)",
+            "unit_minutes": "min"
+          },
+          "default_editor": {
+            "heading": "Standaardmodus voor tijdsinvoer",
+            "options": {
+              "single": "Enkele modus",
+              "scheme": "Tijdschema-modus"
+            }
+          },
+          "sort_by": {
+            "heading": "Sorteer-opties",
+            "description": "Volgorde waarin de schema's worden weergegeven in de kaart",
+            "options": {
+              "relative_time": "Resterende tijd tot volgende actie",
+              "title": "Weergegeven titel van de schema's",
+              "state": "Actieve schema's eerst"
+            }
+          },
+          "display_format_primary": {
+            "heading": "Weergegeven primaire info",
+            "description": "Kies welk label wordt gebruikt in de weergave",
+            "options": {
+              "default": "Schema naam",
+              "entity_action": "Samenvatting van de actie"
+            }
+          },
+          "display_format_secondary": {
+            "heading": "Weergegeven secondaire info",
+            "description": "Kies welke aanvullende informatie zichtbaar is in de weergave",
+            "options": {
+              "relative_time": "Resterende tijd tot volgende actie",
+              "time": "Ingestelde tijd voor de volgende actie",
+              "days": "Herhaalde dagen van de week",
+              "additional_tasks": "Aantal resterende acties"
+            }
+          },
+          "show_header_toggle": {
+            "heading": "Hoofdschakelaar weergeven",
+            "description": "Schakelaar weergeven bovenin de kaart om alle schema's te (de)activeren"
+          },
+          "tags": {
+            "heading": "Tags",
+            "description": "Tags kunnen gebruikt worden om schema's te verdelen over meerdere kaarten"
+          },
+          "entities": {
+            "button_label": "Configureer zichtbare entiteiten",
+            "heading": "Zichtbare entiteiten",
+            "description": "Kies de entiteiten die je wilt bedienen vanuit schema's. Klik op een categorie om deze te openen. Merk op dat sommige entiteiten gebruikt worden om condities toe te wijzen.",
+            "included_number": "{number}/{total} geselecteerd"
+          }
+        }
+      }
+    }
+  }
+}

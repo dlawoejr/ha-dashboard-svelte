@@ -1,0 +1,173 @@
+{
+  "services": {
+    "generic": {
+      "parameter_to_value": "{parameter} vers {value}",
+      "action_with_parameter": "{action} avec {parameter}"
+    },
+    "climate": {
+      "set_temperature": "ajuster la température[ à {temperature}]",
+      "set_temperature_hvac_mode_heat": "chauffe[ à {temperature}]",
+      "set_temperature_hvac_mode_cool": "refroidit[ à {temperature}]",
+      "set_temperature_hvac_mode_heat_cool": "chauffe/refroidit[ à {temperature}]",
+      "set_temperature_hvac_mode_heat_cool_range": "chauffe/refroidit[ à {target_temp_low} - {target_temp_high}]",
+      "set_temperature_hvac_mode_auto": "auto[ à {temperature}]",
+      "set_hvac_mode": "ajuster le mode[ à {hvac_mode}]",
+      "set_preset_mode": "choisir le pré-réglage[ {preset_mode}]",
+      "set_fan_mode": "ajuster le mode de ventilation[ à {fan_mode}]",
+      "set_swing_mode": "set swing mode[ to {swing_mode}]"
+    },
+    "cover": {
+      "close_cover": "fermer",
+      "open_cover": "ouvrir",
+      "set_cover_position": "ajuster la position[ à {position}]",
+      "set_cover_tilt_position": "régler les volets[ à {tilt_position}]"
+    },
+    "fan": {
+      "set_speed": "ajuster la vitesse[ à {speed}]",
+      "set_direction": "ajuster l'orientation[ vers {direction}]",
+      "oscillate": "ajuster l'oscillation[ à {oscillate}]"
+    },
+    "humidifier": {
+      "set_humidity": "ajuster l'humidité[ à {humidity}]",
+      "set_mode": "ajuster le mode[ à {mode}]"
+    },
+    "input_number": {
+      "set_value": "ajuster la valeur[ à {value}]"
+    },
+    "input_select": {
+      "select_option": "choisir l'option[ {option}]"
+    },
+    "select": {
+      "select_option": "choisir l'option[ {option}]"
+    },
+    "light": {
+      "turn_on": "allumer[ avec une luminosité de {brightness}]"
+    },
+    "media_player": {
+      "select_source": "choisir la source[ {source}]"
+    },
+    "notify": {
+      "send_message": "envoyer une notification"
+    },
+    "script": {
+      "execute": "exécuter"
+    },
+    "vacuum": {
+      "start_pause": "démarrer / pause"
+    },
+    "water_heater": {
+      "set_operation_mode": "ajuster le mode[ à {operation_mode}]",
+      "set_away_mode": "choisir le mode absent"
+    }
+  },
+  "ui": {
+    "components": {
+      "date": {
+        "day_types_short": {
+          "daily": "quotidien",
+          "workdays": "jours de travail",
+          "weekend": "weekend"
+        },
+        "day_types_long": {
+          "daily": "chaque jour",
+          "workdays": "en semaine",
+          "weekend": "le weekend"
+        },
+        "days": "jours",
+        "tomorrow": "demain",
+        "repeated_days": "chaque {days}",
+        "repeated_days_except": "chaque jour sauf {excludedDays}",
+        "days_range": "de {startDay} à {endDay}",
+        "next_week_day": "{weekday} prochain"
+      },
+      "time": {
+        "absolute": "à {time}",
+        "interval": "de {startTime} à {endTime}",
+        "at_midnight": "à minuit",
+        "at_noon": "à midi",
+        "at_sun_event": "au {sunEvent}"
+      }
+    },
+    "dialog": {
+      "enable_schedule": {
+        "title": "Compléter les modifications",
+        "description": "Le planning qui a été modifié est actuellement désactivé, doit-il être activé ?"
+      },
+      "confirm_delete": {
+        "title": "Supprimer l'entité ?",
+        "description": "Voulez-vous vraiment supprimer cette entité ?"
+      },
+      "confirm_migrate": {
+        "title": "Modifier l'horaire",
+        "description": "Certains paramètres seront perdus par ce changement. Voulez-vous poursuivre?"
+      },
+      "weekday_picker": {
+        "title": "Jours de répétition",
+        "choose": "Choisir les jours..."
+      },
+      "entity_picker": {
+        "title": "Choisir les entités",
+        "choose": "Choisir...",
+        "no_results": "Aucune entité trouvée"
+      },
+      "action_picker": {
+        "title": "Choisir une action"
+      }
+    },
+    "panel": {
+      "common": {
+        "title": "Planificateur",
+        "new_schedule": "Nouvel horaire",
+        "default_name": "Horaire #{id}"
+      },
+      "overview": {
+        "no_entries": "il n'y a pas d'entrée à montrer",
+        "backend_error": "Impossible de se connecter au composant du planificateur. Il doit être installé en tant qu'intégration avant que cette carte ne puisse être utilisée.",
+        "excluded_items": "{number} {if number is 1}entrée exclue{else}entrées exclues",
+        "hide_excluded": "cacher les entrées exclues",
+        "additional_tasks": "{number} {if number is 1}tâche à venir{else}tâches à venir"
+      },
+      "editor": {
+        "repeated_days": "Jours de répétition",
+        "start_time": "Heure de début",
+        "stop_time": "Heure de fin",
+        "action": "Action",
+        "add_action": "Ajouter une action",
+        "select_timeslot": "Choisir d'abord une plage horaire",
+        "toggle_single_mode": "Vers mode simple",
+        "toggle_scheme_mode": "Vers mode schéma",
+        "validation_errors": {
+          "overlapping_time": "Certaines plages horaires se chevauchent",
+          "missing_target_entity": "Certaines actions n'ont pas d'entité sélectionnée",
+          "missing_service_parameter": "Certaines actions ne sont pas totalement configurées",
+          "missing_action": "Le planning n'a aucune action définie"
+        }
+      },
+      "options": {
+        "conditions": {
+          "header": "Conditions",
+          "add_condition": "Ajouter une condition",
+          "new_condition": "Nouvelle condition",
+          "types": {
+            "equal_to": "{entity} est égal à {value}",
+            "unequal_to": "{entity} n'est pas égal à {value}",
+            "above": "{entity} est supérieur à {value}",
+            "below": "{entity} est inférieur à {value}"
+          },
+          "options": {
+            "logic_and": "Toutes les conditions doivent être valides",
+            "logic_or": "Au moins une condition doit être valide",
+            "track_changes": "Ré-évaluer lorsque la condition change"
+          }
+        },
+        "period": {
+          "header": "Période",
+          "start_date": "Du",
+          "end_date": "Au"
+        },
+        "repeat_type": "Comportement après l'achèvement",
+        "tags": "Tags"
+      }
+    }
+  }
+}
