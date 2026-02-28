@@ -164,8 +164,24 @@ export class HomeAssistantAPI {
                 break;
 
             case 'event':
-                if (data.event && this.onStateChange) {
-                    if (data.event.data) {
+                if (!data.event) break;
+
+                // 1. Scheduler updates (Custom Component Structure)
+                // The scheduler-component sends events where data.event.event identifies the type
+                // Sometimes data.event is the payload itself if subscribed via certain methods
+                const schedulerEvent = data.event.event || (typeof data.event === 'string' ? data.event : null);
+
+                if (schedulerEvent && schedulerEvent.startsWith('scheduler_')) {
+                    console.log('[HA API] Scheduler event detected:', schedulerEvent, 'Data:', data.event);
+                    if (this.onSchedulerChange) {
+                        this.onSchedulerChange(data.event);
+                    }
+                    break;
+                }
+
+                // 2. State changes (Standard HA Events or Triggers)
+                if (this.onStateChange) {
+                    if (data.event.data && data.event.data.new_state) {
                         // Legacy subscribe_events response (state_changed)
                         this.onStateChange(data.event.data);
                     } else if (data.event.variables && data.event.variables.trigger) {
@@ -176,6 +192,15 @@ export class HomeAssistantAPI {
                             new_state: trigger.to_state,
                             old_state: trigger.from_state
                         });
+                    } else if (data.event.event_type === 'scheduler_updated') {
+                        // Fallback for some versions that might use event_type
+                        if (this.onSchedulerChange) this.onSchedulerChange(data.event.data || data.event);
+                        break;
+                    } else {
+                        // Some other event, let's log it if it's not a standard state change
+                        if (data.event.event_type !== 'state_changed') {
+                            console.log('[HA API] Other event structure:', data.event);
+                        }
                     }
                 }
                 break;
@@ -225,6 +250,26 @@ export class HomeAssistantAPI {
             return () => {
                 if (this.socket && this.socket.readyState === WebSocket.OPEN) {
                     this.sendCommand({ type: 'unsubscribe_events', subscription: id }).catch(() => { });
+                }
+            };
+        });
+    }
+
+    subscribeScheduler() {
+        const id = this.idCounter++;
+        return new Promise((resolve, reject) => {
+            this.callbacks.set(id, { resolve, reject });
+            // Custom command for scheduler-component to start subscription
+            this.send({
+                id,
+                type: 'scheduler_updated'
+            });
+        }).then(() => {
+            return () => {
+                if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                    // Note: scheduler-component handles unsubscription when socket closes, 
+                    // or we might need a specific unsubscribe if it supported one.
+                    // Standard unsubscribe_events might not work for custom commands.
                 }
             };
         });

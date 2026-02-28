@@ -208,3 +208,35 @@ Home Assistant의 커스텀 스케줄러 컴포넌트(`scheduler-component`)와 
 | `src/lib/stores/ha-store.svelte.js` | 수정 | 뷰 전환 상태 및 스케줄러 조작 액션 매핑 |
 | `src/routes/+page.svelte` | 수정 | `activeView` 기반 조건부 화면 전환 적용 |
 | `src/lib/components/SchedulerCard.svelte` | **신규** | 자체 제작 스케줄 관리 카드 컴포넌트 |
+
+---
+
+## ⚡ 스케줄러(Scheduler) 실시간 동기화 보강 및 UI/UX 개선
+
+> 작업일: 2026-02-28
+
+### 🎯 목표
+
+기존에 수동 새로고침에 의존하던 스케줄러 UI를 HA 서버의 WebSocket 이벤트(`scheduler_updated`)에 기반한 **완전 실시간 자동 갱신 구조**로 리팩토링하고, 사용자 경험을 저해하던 로딩 깜빡임과 비시인성 문제를 해결한다.
+
+### 📋 주요 개선 내용
+
+#### 1. WebSocket 커스텀 이벤트(`scheduler-component`) 구조 파악 및 파싱 로직 수정
+- **문제**: 스케줄러 백엔드 소스(`websockets.py`) 분석 결과, 일반적인 HA의 `subscribe_events` 규격 대신 `type: 'scheduler_updated'`라는 커스텀 프론트엔드 통신 규약을 사용하고 있었음. 이로 인해 수정/삭제 이벤트가 클라이언트로 전달되지 않거나 엉뚱한 필드(`data.event.event`)에 매핑되는 버그 발생.
+- **해결 (`ha-api.js`)**:
+  - `subscribeScheduler()` 명령어 전송 방식을 커스텀 규격에 맞게 1:1 대응.
+  - `handleMessage` 스위치 문 내에 `scheduler_`로 시작하는 이벤트를 최우선으로 가로채는 독립적인 파싱 분기 추가.
+  - 이를 통해 **생성, 수정, 삭제, 타이머 완료 등 모든 종류의 스케줄러 이벤트**를 클라이언트에서 실시간 누락 없이 감지 가능해짐.
+
+#### 2. 전역 스토어(`haStore`) 기반 상태 병합 및 하이드로제이션 에러 해결
+- **문제**: `SchedulerCard.svelte` 내부 로컬 상태였던 스케줄 목록을 전역스토어로 이동시키는 과정에서 `ReferenceError` 등 변수 꼬임 현상 발생. 변경 이벤트에서 `new_state: undefined`인 이벤트가 유입될 때 앱 전체 크래시 발생.
+- **해결 (`ha-store.svelte.js`)**:
+  - 스토어 내부에 `schedules`, `loadingSchedules` 상태 변수를 안전하게 통합하고, HA 연결 초기화 시 병렬로 스케줄 데이터를 동시 Fetch하도록 구성.
+  - `updateEntityState`에 **Guard Clause**(방어막)를 추가하여, `entity_id`가 null인 비정상 패킷이 유입되더라도 예외 콘솔만 노출하고 브라우저 렌더러가 멈추지 않도록 무력화함.
+
+#### 3. 백그라운드 무소음(Silent) 갱신 및 "일시정지" 시인성 극대화
+- **문제**: 실시간 이벤트마다 `loadingSchedules = true`가 트리거되어, 1초 미만의 순간 동안 리스트 전체가 "불러오는 중..." 텍스트로 치환되며 화면이 심하게 번쩍(Flickering)이는 증상 발생. 꺼져있는 항목도 육안으로 잘 구별되지 않음.
+- **해결 (`SchedulerCard.svelte`, `ha-store.svelte.js`)**:
+  - 스토어의 `loadSchedules(isBackground=true)` 인자 옵션을 추가하여, 최초 로딩 이후 웹소켓 이벤트에 의한 백그라운드 갱신 시에는 로딩 상태를 조작하지 않고 데이터만 덮어씌우도록(`Svelte` 반응성에 맞게) 수정하여 **깜빡임 완전 제거**.
+  - 비활성화(Disabled) 스케줄 항목의 투명도를 75%로 맞추고, CSS `repeating-linear-gradient`를 활용해 대시보드 빗금(`Dashed`) 패턴 백그라운드를 적용하여 직관성을 높임.
+  - 상태 표시 배지 디자인을 수정하여, `[일시정지]` 문구를 붉은색(`bg-red-500`) 배경 + 볼드체로 변경하여 한 번에 상태 구별이 가능해짐.

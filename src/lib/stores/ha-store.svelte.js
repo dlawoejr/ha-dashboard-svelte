@@ -12,7 +12,11 @@ export function createHAStore() {
     let currentToken = $state('');
     let ha = null;
     let isReconnectingLock = false;
-    let currentSubscriptionUnsubscribe = null;
+    let isSubmitting = false; // Internal lock for submitting
+    let schedules = $state([]);
+    let loadingSchedules = $state(false);
+    let currentEntityUnsubscribe = null;
+    let currentSchedulerUnsubscribe = null;
     let sleepResolver = null;
 
     /**
@@ -182,7 +186,9 @@ export function createHAStore() {
                 // HOT RECONNECT: Run Delta Sync and Global Subscription concurrently!
                 await Promise.all([
                     syncStates(),
-                    setupGlobalSubscription()
+                    loadSchedules(),
+                    setupGlobalSubscription(),
+                    setupSchedulerSubscription()
                 ]);
             } else {
                 // Cold Start: Fetch everything concurrently, then set up subscription
@@ -230,11 +236,20 @@ export function createHAStore() {
                 }
 
                 // Now that entities are populated, set up the subscription
-                await setupGlobalSubscription();
+                await Promise.all([
+                    setupGlobalSubscription(),
+                    loadSchedules(),
+                    setupSchedulerSubscription()
+                ]);
             }
 
             ha.onStateChange = (event) => {
                 updateEntityState(event.new_state);
+            };
+
+            ha.onSchedulerChange = (data) => {
+                console.log('[Scheduler] Update event received:', data);
+                loadSchedules(true); // background update
             };
 
         } catch (err) {
@@ -302,28 +317,71 @@ export function createHAStore() {
         activeView = view;
     }
 
-    // Scheduler API wrappers
+    async function loadSchedules(isBackground = false) {
+        if (!ha) return;
+
+        if (!isBackground) {
+            loadingSchedules = true;
+        }
+
+        try {
+            const result = await ha.getSchedules();
+            schedules = Array.isArray(result) ? result : [];
+        } catch (err) {
+            console.error('Failed to load schedules:', err);
+        } finally {
+            if (!isBackground) {
+                loadingSchedules = false;
+            }
+        }
+    }
+
+    async function setupSchedulerSubscription() {
+        if (!ha || connectionStatus !== 'connected') return;
+
+        if (currentSchedulerUnsubscribe) {
+            currentSchedulerUnsubscribe();
+            currentSchedulerUnsubscribe = null;
+        }
+
+        try {
+            currentSchedulerUnsubscribe = await ha.subscribeScheduler();
+        } catch (err) {
+            console.error('Failed to subscribe to scheduler:', err);
+        }
+    }
+
     function getSchedules() {
-        if (!ha) return Promise.resolve([]);
-        return ha.getSchedules();
+        return schedules;
     }
 
-    function addSchedule(data) {
+    async function addSchedule(data) {
         if (!ha) return Promise.reject('Not connected');
-        return ha.addSchedule(data);
+        const res = await ha.addSchedule(data);
+        // Do NOT manually reload here, wait for WebSocket event
+        return res;
     }
 
-    function deleteSchedule(scheduleId) {
+    async function deleteSchedule(scheduleId) {
         if (!ha) return Promise.reject('Not connected');
-        return ha.deleteSchedule(scheduleId);
+        const res = await ha.deleteSchedule(scheduleId);
+        // Do NOT manually reload here
+        return res;
     }
 
-    function editSchedule(data) {
+    async function editSchedule(data) {
         if (!ha) return Promise.reject('Not connected');
-        return ha.editSchedule(data);
+        const res = await ha.editSchedule(data);
+        // Do NOT manually reload here
+        return res;
     }
 
     function updateEntityState(newState) {
+        if (!newState || !newState.entity_id) {
+            console.warn('[HA Store] Invalid newState passed to updateEntityState:', newState);
+            return;
+        }
+
         const index = entities.findIndex(e => e.entity_id === newState.entity_id);
         if (index !== -1) {
             entities[index] = {
@@ -365,14 +423,14 @@ export function createHAStore() {
         if (!ha || connectionStatus !== 'connected') return;
 
         // Unsubscribe from previous trigger to avoid memory/event leaks on the server
-        if (currentSubscriptionUnsubscribe) {
-            currentSubscriptionUnsubscribe();
-            currentSubscriptionUnsubscribe = null;
+        if (currentEntityUnsubscribe) {
+            currentEntityUnsubscribe();
+            currentEntityUnsubscribe = null;
         }
 
         if (entityIds && entityIds.length > 0) {
             try {
-                currentSubscriptionUnsubscribe = await ha.subscribeEntities(entityIds);
+                currentEntityUnsubscribe = await ha.subscribeEntities(entityIds);
             } catch (err) {
                 console.error('Failed to subscribe to entities:', err);
             }
@@ -402,9 +460,12 @@ export function createHAStore() {
         updateEntityState,
         updateSubscription,
         getSchedules,
+        loadSchedules,
         addSchedule,
         deleteSchedule,
         editSchedule,
+        get schedules() { return schedules; },
+        get loadingSchedules() { return loadingSchedules; }
     };
 }
 
