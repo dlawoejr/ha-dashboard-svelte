@@ -1,4 +1,4 @@
-export const prerender = process.env.BUILD_TARGET === 'static' ? true : false;
+export const prerender = import.meta.env.VITE_BUILD_TARGET === 'static' ? true : false;
 
 export async function GET({ url }) {
     // 빌드 타임(prerender)에는 URL 정보가 없으므로 기본 이름 사용
