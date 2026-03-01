@@ -1,6 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import QRCode from "qrcode";
+    import { base } from "$app/paths";
     import { haStore } from "../stores/ha-store.svelte";
 
     let showModal = $state(false);
@@ -15,12 +16,21 @@
 
         isGenerating = true;
 
-        const connectUrl = new URL(window.location.origin);
+        // 정적 빌드인 경우 BASE_PATH 뒤에 /index.html을 붙임
+        let path = base || "/";
+        if (import.meta.env.VITE_BUILD_TARGET === "static") {
+            path = (base || "") + "/index.html";
+        }
+
+        const connectUrl = new URL(path, window.location.origin);
         connectUrl.searchParams.set("url", haStore.currentUrl);
         connectUrl.searchParams.set("token", haStore.currentToken);
         if (appName.trim()) {
             connectUrl.searchParams.set("name", appName.trim());
         }
+
+        // PWA 및 HA /local 폴더의 강력 캐시를 무력화하기 위한 타임스탬프 추가
+        connectUrl.searchParams.set("_t", Date.now().toString());
 
         connectUrlString = connectUrl.toString();
 
@@ -54,13 +64,37 @@
     async function copyLink() {
         if (!connectUrlString) return;
         try {
-            await navigator.clipboard.writeText(connectUrlString);
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(connectUrlString);
+            } else {
+                // Fallback for non-secure contexts (HTTP over local network)
+                const textArea = document.createElement("textarea");
+                textArea.value = connectUrlString;
+
+                // Avoid scrolling to bottom
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.position = "fixed";
+
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                const successful = document.execCommand("copy");
+                document.body.removeChild(textArea);
+
+                if (!successful) throw new Error("Fallback copy failed");
+            }
+
             copySuccess = true;
             setTimeout(() => {
                 copySuccess = false;
             }, 2000);
         } catch (err) {
             console.error("Failed to copy link", err);
+            alert(
+                "URL 복사에 실패했습니다. 브라우저가 클립보드 접근을 허용하지 않거나 안전한 연결(HTTPS)이 아닙니다.",
+            );
         }
     }
 </script>

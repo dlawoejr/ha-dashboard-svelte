@@ -240,3 +240,40 @@ Home Assistant의 커스텀 스케줄러 컴포넌트(`scheduler-component`)와 
   - 스토어의 `loadSchedules(isBackground=true)` 인자 옵션을 추가하여, 최초 로딩 이후 웹소켓 이벤트에 의한 백그라운드 갱신 시에는 로딩 상태를 조작하지 않고 데이터만 덮어씌우도록(`Svelte` 반응성에 맞게) 수정하여 **깜빡임 완전 제거**.
   - 비활성화(Disabled) 스케줄 항목의 투명도를 75%로 맞추고, CSS `repeating-linear-gradient`를 활용해 대시보드 빗금(`Dashed`) 패턴 백그라운드를 적용하여 직관성을 높임.
   - 상태 표시 배지 디자인을 수정하여, `[일시정지]` 문구를 붉은색(`bg-red-500`) 배경 + 볼드체로 변경하여 한 번에 상태 구별이 가능해짐.
+
+---
+
+## 📱 로컬/정적 빌드 환경(HA /local/) 배포 완벽 지원 및 QR 스캔 최적화
+
+> 작업일: 2026-03-01
+
+### 🎯 목표
+
+Home Assistant의 `www`(/local/) 폴더나 외부 웹 서버로 SvelteKit 앱을 배포하기 위해 **Static Adapter** 빌드를 분리하고, 서브 디렉토리 접속 환경でも 모바일 기기를 원활하게 연동할 수 있도록 **QR 코드 생성기 및 딥링크**의 로직 안정성을 확보한다.
+
+### 📋 주요 구현 및 트러블슈팅
+
+#### 1. 빌드 환경 분리 (Cloudflare vs Static)
+- **과제:** 기존 SSR 기반 Cloudflare 설정과, 순수 파일 서빙 목적의 정적(Static) 설정을 한 소스에서 하이브리드로 지원해야 함.
+- **해결:** `cross-env`를 도입하여 `package.json`에 `build:static` 스크립트를 신설함 (`BUILD_TARGET`, `VITE_BUILD_TARGET` 환경변수 주입).
+- **파일:** `svelte.config.js`에서 환경변수에 따라 `adapter-cloudflare`와 `adapter-static`을 동적으로 교체 적용. 정적 빌드 시 `_app` 폴더명 충돌 방지를 위해 `appDir: 'app'`으로 수정.
+
+#### 2. 서브 디렉토리 라우팅 (`BASE_PATH`) 및 Web Manifest 대응
+- **과제:** HA의 `/local/mypage`처럼 특정 경로 하위에 앱을 올릴 경우, 폰에서 QR 스캔 시 앱의 최상위 루트(`/`)로 가버리는 문제.
+- **해결:** `svelte.config.js`에 `paths.base = process.env.BASE_PATH`를 적용.
+- **파일:** `src/routes/manifest.json/+server.js`에서 런타임 URL 파싱 로직 접근 시, 정적 렌더링(prerender) 환경에서는 오류가 나지 않도록 조건부 처리.
+
+#### 3. QR코드 URL에 `index.html` 경로 주입 및 HA 리다이렉션 버그 패치
+- **과제:** Static 어댑터 사용 시 폴더 경로만 접속하면 404가 나는 웹서버 대응, 반대로 HA에서는 1. `/index.html`을 뒤에 강제로 붙여 생성해야 하고 2. 붙여서 접속하면 스토어 라우팅이 꼬이는 이중 문제 발생.
+- **해결 (`QRConnect.svelte`):** 브라우저단 변수인 `import.meta.env.VITE_BUILD_TARGET`를 확인하여 정적 빌드일 경우 QR로 만들어주는 주소에 명시적으로 `/index.html`을 연결.
+- **해결 (`app.html`):** 브라우저 진입 직후 구동되는 후킹 스크립트 작성. 접속 주소에 `index.html`이 있다면 Svelte 로딩 직전에 `history.replaceState`로 깔끔하게 제거함.
+- **디버깅 패치:** 처음 스크립트 작성 시 `location.search`를 보존하지 않아 스캔된 로그인 `token`이 소실되던 치명적 버그 수정!
+
+#### 4. 브라우저 캐시(Service Worker) 고착화 방지
+- **과제:** HA `/local/` 캐시 정책이 너무 강력하여 코드를 수정한 후 재배포해도 스마트폰이 계속 구버전을 로드하는 현상 파악.
+- **해결:** QR 코드 생성 URL의 파라미터 끝에 타임스탬프(`&_t=123...`)를 난수로 강제 삽입. 매 QR 스캔 시마다 캐시를 완벽히 우회하여 무조건 최신 코드를 다운로드하게끔 보완.
+
+#### 5. HTTP(로컬 네트워크) 클립보드 복사(Copy) 오류 해결
+- **과제:** SSL 인증서가 없는 내부망 환경(HTTP)에서 QR URL의 "Copy URL Link" 버튼 터치 시 `Cannot read properties of undefined (reading 'writeText')` 에러 크래시.
+- **원인:** 최신 자바스크립트의 `navigator.clipboard` API 모듈은 강력한 보안 정책 때문에 무조건 `HTTPS`가 강제됨.
+- **해결 (`QRConnect.svelte`):** `navigator.clipboard`와 `window.isSecureContext`를 체크하고, 없을 경우 보이지 않는 텍스트 박스(`<textarea>`)를 DOM에 임시 주입하여 `document.execCommand('copy')`를 호출하는 **Fallback 복사 우회 로직** 추가.

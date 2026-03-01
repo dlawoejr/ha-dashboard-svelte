@@ -22,7 +22,7 @@
 	<!-- Handle HA /local/ index.html 404 issue -->
 	<script>
 		if (location.pathname.endsWith('/index.html')) {
-			history.replaceState(null, '', location.pathname.replace('/index.html', '/'));
+			history.replaceState(null, '', location.pathname.replace('/index.html', '/') + location.search + location.hash);
 		}
 	</script>
 	%sveltekit.head%

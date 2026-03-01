@@ -1,0 +1,87 @@
+
+> ha-dashboard@0.0.1 build:static
+> cross-env BUILD_TARGET=static vite build
+
+[36mvite v7.3.1 [32mbuilding ssr environment for production...[36m[39m
+transforming...
+?ㅼ쟾 11:02:41 [vite-plugin-svelte] src/lib/components/SchedulerCard.svelte:350:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+348:             aria-hidden="true"
+349:         >
+350:             <div
+                      ^
+351:                 class="modal-content glass-panel"
+352:                 transition:fade={{ duration: 200 }}
+?ㅼ쟾 11:02:41 [vite-plugin-svelte] src/lib/components/SchedulerCard.svelte:350:12 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+348:             aria-hidden="true"
+349:         >
+350:             <div
+                      ^
+351:                 class="modal-content glass-panel"
+352:                 transition:fade={{ duration: 200 }}
+[32m??[39m 206 modules transformed.
+rendering chunks...
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+?ㅼ쟾 11:02:44 [vite-plugin-svelte] src/lib/components/SchedulerCard.svelte:350:12 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+348:             aria-hidden="true"
+349:         >
+350:             <div
+                      ^
+351:                 class="modal-content glass-panel"
+352:                 transition:fade={{ duration: 200 }}
+?ㅼ쟾 11:02:44 [vite-plugin-svelte] src/lib/components/SchedulerCard.svelte:350:12 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+348:             aria-hidden="true"
+349:         >
+350:             <div
+                      ^
+351:                 class="modal-content glass-panel"
+352:                 transition:fade={{ duration: 200 }}
+[32m??[39m 216 modules transformed.
+rendering chunks...
+computing gzip size...
+[2m.svelte-kit/output/client/[22m[32m_app/version.json                       [39m[1m[2m 0.03 kB[22m[1m[22m[2m ??gzip:  0.05 kB[22m
+[2m.svelte-kit/output/client/[22m[32m.vite/manifest.json                     [39m[1m[2m 3.63 kB[22m[1m[22m[2m ??gzip:  0.69 kB[22m
+[2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/0.CkRhr6sn.css    [39m[1m[2m 6.12 kB[22m[1m[22m[2m ??gzip:  1.94 kB[22m
+[2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/2.DX75Hp-j.css    [39m[1m[2m12.88 kB[22m[1m[22m[2m ??gzip:  2.98 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/start.BwnJTksE.js  [39m[1m[2m 0.08 kB[22m[1m[22m[2m ??gzip:  0.09 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CtbiUb4G.js       [39m[1m[2m 0.43 kB[22m[1m[22m[2m ??gzip:  0.31 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/xq5LiN3P.js       [39m[1m[2m 0.53 kB[22m[1m[22m[2m ??gzip:  0.34 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/1.ERaCua7P.js      [39m[1m[2m 0.56 kB[22m[1m[22m[2m ??gzip:  0.35 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/DIv0L8zB.js       [39m[1m[2m 0.63 kB[22m[1m[22m[2m ??gzip:  0.39 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Ct3wjICH.js       [39m[1m[2m 0.63 kB[22m[1m[22m[2m ??gzip:  0.39 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CPxyU-JW.js       [39m[1m[2m 1.17 kB[22m[1m[22m[2m ??gzip:  0.65 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/juOtAiAV.js       [39m[1m[2m 1.23 kB[22m[1m[22m[2m ??gzip:  0.70 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CDgpm6ef.js       [39m[1m[2m 1.49 kB[22m[1m[22m[2m ??gzip:  0.66 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/0.K7HN4nnL.js      [39m[1m[2m 1.68 kB[22m[1m[22m[2m ??gzip:  0.94 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BjPRSoTO.js       [39m[1m[2m 6.53 kB[22m[1m[22m[2m ??gzip:  2.98 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/app.BoCKlGL2.js    [39m[1m[2m 6.88 kB[22m[1m[22m[2m ??gzip:  3.21 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/ByK95lCj.js       [39m[1m[2m23.19 kB[22m[1m[22m[2m ??gzip:  9.16 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CRq2dSiy.js       [39m[1m[2m25.69 kB[22m[1m[22m[2m ??gzip: 10.09 kB[22m
+[2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/2.DYWhOQjs.js      [39m[1m[2m73.23 kB[22m[1m[22m[2m ??gzip: 27.62 kB[22m
+[32m??built in 1.00s[39m
+
+[500] GET /manifest.json
+Error: Cannot access url.searchParams on a page with prerendering enabled
+    at URL.get (file:///D:/aiproject/antigravity/ha-dashboard/.svelte-kit/output/server/chunks/exports.js:86:15)
+    at GET (file:///D:/aiproject/antigravity/ha-dashboard/.svelte-kit/output/server/entries/endpoints/manifest.json/_server.js:3:21)
+    at file:///D:/aiproject/antigravity/ha-dashboard/.svelte-kit/output/server/index.js:52:13
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at with_request_store (file:///D:/aiproject/antigravity/ha-dashboard/node_modules/@sveltejs/kit/src/exports/internal/event.js:77:20)
+    at render_endpoint (file:///D:/aiproject/antigravity/ha-dashboard/.svelte-kit/output/server/index.js:50:28)
+    at resolve2 (file:///D:/aiproject/antigravity/ha-dashboard/.svelte-kit/output/server/index.js:3515:29)
+
+node:internal/event_target:1122
+  process.nextTick(() => { throw err; });
+                           ^
+Error: 500 /manifest.json
+To suppress or handle this error, implement `handleHttpError` in https://svelte.dev/docs/kit/configuration#prerender
+    at file:///D:/aiproject/antigravity/ha-dashboard/node_modules/@sveltejs/kit/src/core/config/options.js:221:13
+    at file:///D:/aiproject/antigravity/ha-dashboard/node_modules/@sveltejs/kit/src/core/postbuild/prerender.js:75:25
+    at save (file:///D:/aiproject/antigravity/ha-dashboard/node_modules/@sveltejs/kit/src/core/postbuild/prerender.js:464:4)
+    at visit (file:///D:/aiproject/antigravity/ha-dashboard/node_modules/@sveltejs/kit/src/core/postbuild/prerender.js:283:3)
+
+Node.js v24.12.0
