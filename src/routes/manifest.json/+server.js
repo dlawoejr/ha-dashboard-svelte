@@ -1,22 +1,25 @@
-export const prerender = false; // We need this to be dynamic on request
+export const prerender = process.env.BUILD_TARGET === 'static' ? true : false;
 
 export async function GET({ url }) {
-    // 1. Try to get a specific name from the query parameters (e.g. ?name=Office)
-    let appName = url.searchParams.get('name');
+    // 빌드 타임(prerender)에는 URL 정보가 없으므로 기본 이름 사용
+    let appName = 'HA Dash';
 
-    // 2. If no name in URL or browser strips it, extract the subdomain automatically
-    if (!appName) {
-        const host = url.hostname;
-        const parts = host.split('.');
-        const subdomain = parts[0];
+    try {
+        // 동적 런타임일 경우에만 searchParams와 hostname 접근
+        const nameParam = url.searchParams.get('name');
+        if (nameParam) {
+            appName = nameParam;
+        } else if (url.hostname) {
+            const host = url.hostname;
+            const parts = host.split('.');
+            const subdomain = parts[0];
 
-        // Capitalize the first letter (e.g. "home.abc.com" -> "Home")
-        if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
-            appName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
-        } else {
-            // Default app name if it's localhost or an IP address
-            appName = 'HA Dash';
+            if (subdomain && subdomain !== 'localhost' && subdomain !== '127') {
+                appName = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
+            }
         }
+    } catch (e) {
+        // Pre-rendering 시 URL 접근 에러 무시
     }
 
     const manifest = {
