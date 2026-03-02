@@ -93,7 +93,7 @@
 
 ## ⚠️ TODO (정리 필요)
 
-- [ ] Eruda 디버거 제거 (`src/app.html`)
+- [x] Eruda 디버거 제거 (`src/app.html`)
 - [ ] `console.log` 디버그 로그 정리 (`[V11 TIMER]`, `[V12]`, `[PERF_V10]` 등)
 - [ ] `[TEST V12]` 배지 제거 또는 정식 버전으로 변경
 
@@ -277,3 +277,26 @@ Home Assistant의 `www`(/local/) 폴더나 외부 웹 서버로 SvelteKit 앱을
 - **과제:** SSL 인증서가 없는 내부망 환경(HTTP)에서 QR URL의 "Copy URL Link" 버튼 터치 시 `Cannot read properties of undefined (reading 'writeText')` 에러 크래시.
 - **원인:** 최신 자바스크립트의 `navigator.clipboard` API 모듈은 강력한 보안 정책 때문에 무조건 `HTTPS`가 강제됨.
 - **해결 (`QRConnect.svelte`):** `navigator.clipboard`와 `window.isSecureContext`를 체크하고, 없을 경우 보이지 않는 텍스트 박스(`<textarea>`)를 DOM에 임시 주입하여 `document.execCommand('copy')`를 호출하는 **Fallback 복사 우회 로직** 추가.
+
+#### 6. Cloudflare 배포 환경 `manifest.json` 500 에러 및 파비콘 누락 해결
+- **과제 1:** Cloudflare Pages로 배포된 환경(`home.ha-hubs.com`)에 접속 시 SSR 백엔드에서 `manifest.json` 응답이 500 에러를 뿜으며 렌더링을 차단함.
+- **해결 1 (`src/routes/manifest.json/+server.js`):** Node.js 로컬 구동 전용 객체인 `process.env.BUILD_TARGET`를 서버리스(Edge) 환경에서도 안전하게 빌드타임 치환되는 Vite의 `import.meta.env.VITE_BUILD_TARGET`으로 교체.
+- **과제 2:** 브라우저 백그라운드 탭에서 `/favicon.ico`를 무작정 조회하며 404 에러가 무한 반복됨.
+- **해결 2 (`src/app.html`):** `<head>` 태그 내부에 `<link rel="icon" href="%sveltekit.assets%/images/icon-192.png" type="image/png">` 구문을 꽂아넣어 브라우저가 쓸데없이 루트 파비콘을 찾지 않도록 폴백(Fallback) 방지.
+
+#### 7. 완전 오프라인(내부망) 구동을 위한 외부 폰트 의존성 컴포넌트 제거
+- **과제:** 인터넷이 완전히 차단된 내부 로컬 네트워크망에서 구글 웹 폰트(`Inter`) 로딩 타임아웃으로 인한 렌더링 지연 및 UI 폰트 깨짐 현상 예방 필요.
+- **해결 (`app.html`, `app.css`):** 기존 `fonts.googleapis.com` CND 호출 코드를 완벽히 삭제하고, 애플/안드로이드/윈도우 각 운영체제에서 가장 미려한 기본 고딕 폰트로 즉각(0ms) 대체되는 **단면 최적화 시스템 폰트 스택(System Font Stack)**으로 전격 교체. (`appearance: textfield;` CSS 웹표준 린트 경고 추가 해결)
+- **보상:** 외부망 의존성을 끊어내어 HA 오프라인 환경에서도 100% 쾌적한 로컬 구동 확보.
+
+#### 8. 모바일 홈 화면 추가 시 "앱 전체화면(Standalone)" 모드 구동 최적화
+- **과제:** 안드로이드 등 기기에서 북마크나 PWA 홈 화면 추가를 하더라도 앱처럼 주소창이 가려지지 않는 문제 발생 및 하위 경로 진입 시 `/local/` 서브 라우트 강제 이탈 문제 발생.
+- **분리 패치 1 (`manifest.json/+server.js`):** 매니페스트 `start_url` 설정값 끄트머리가 무조건 `/`로 초기화되어 HA 기본 대시보드로 돌아가버리는(탈주) 치명적 이슈 해결을 위해, SvelteKit의 빌드타임 `base` 경로와 `index.html`을 능동 주입하도록 동적 하드코딩화(`base + '/index.html?source=pwa'`).
+- **분리 패치 2 (`app.html`):** `<head>` 영역에 누락되어 전체화면을 껍데기만 구동시키던 매니페스트 링크(`<link rel="manifest">`)를 확실하게 삽입(불필요한 `crossorigin` 속성 단축).
+- **디버깅 성과:** *위 조치에도 안드로이드 크롬은 무조건 `HTTPS(보안연결)`에서만 앱 모드 렌더링을 허용한다는 구글의 강력한 하드코딩 정책 한계를 발굴함. `chrome://flags/#unsafely-treat-insecure-origin-as-secure` 세팅을 통해 공유기 기반 로컬 IP(HTTP) 접속 환경에서도 강제로 제약을 풀고 진짜 앱처럼 전체화면으로 쓸 수 있는 사용자 단독 우회 가이드 제공안 마련.*
+
+#### 9. 모바일 "당겨서 새로고침" 시 403 Forbidden 에러 해결
+- **문제:** 로컬망(HTTP) 환경에서 대시보드 사용 중 화면을 아래로 당겨 새로고침할 때 브라우저가 정적 파일(`index.html`)이 아닌 폴더 경로로 재접속을 시도하여 HA 서버가 403 에러를 반환함.
+- **원인:** 기존 `app.html`에 포함되어 있던 "주소창에서 index.html 숨기기" 로직이 파일명을 지워버려, 새로고침 시 서버가 폴더 리스팅 권한 부족으로 차단했던 것임.
+- **해결 (`app.html`):** 주소창의 `index.html`을 강제로 제거하던 `history.replaceState` 스크립트를 삭제. 이제 새로고침 시에도 항상 파일명을 포함한 주소로 요청하게 되어 403 에러가 완벽히 해결됨. 
+- **참고:** PWA 전체화면 모드에서는 어차피 주소창이 보이지 않으므로, 사용자 인지 측면에서는 변화가 없으면서도 기능적 안정성은 확보됨.

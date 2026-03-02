@@ -14,27 +14,14 @@
 	<meta name="apple-mobile-web-app-title" content="HA Dash">
 	<link rel="apple-touch-icon" href="%sveltekit.assets%/images/icon-192.png">
 	<link rel="icon" href="%sveltekit.assets%/images/icon-192.png" type="image/png">
+	<link rel="manifest" href="%sveltekit.assets%/manifest.json">
 
-	<!-- Fonts -->
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-	<!-- Handle HA /local/ index.html 404 issue -->
-	<script>
-		if (location.pathname.endsWith('/index.html')) {
-			history.replaceState(null, '', location.pathname.replace('/index.html', '/') + location.search + location.hash);
-		}
-	</script>
 	%sveltekit.head%
 </head>
 
 <body data-sveltekit-preload-data="hover">
 	<div style="display: contents">%sveltekit.body%</div>
 
-	<!-- Eruda: Mobile Console Debugger (TEMPORARY - remove after debugging) -->
-	<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-	<script>eruda.init();</script>
 </body>
 
 </html>
