@@ -91,6 +91,9 @@
     function onPointerUp() {
         if (!isDragging) return;
         isDragging = false;
+
+        let initialIndex = isUp ? 0 : isDown ? 2 : 1;
+
         // Snap to nearest position
         let nearest = 0;
         let minDist = Math.abs(dragKnobTop - switchPositions[0]);
@@ -101,6 +104,16 @@
                 nearest = i;
             }
         }
+
+        // --- Phase 3 Logic: Prevent direct Up <-> Down ---
+        // If moving from Up(0) to Down(2) or vice versa directly, snap back to Center(1)
+        if (
+            (initialIndex === 0 && nearest === 2) ||
+            (initialIndex === 2 && nearest === 0)
+        ) {
+            nearest = 1;
+        }
+
         // Set optimistic position immediately
         optimisticIndex = nearest;
         // Apply action based on snapped position

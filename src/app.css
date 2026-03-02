@@ -12,7 +12,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
@@ -53,12 +53,13 @@ header {
 }
 
 h1 {
-    font-size: 2rem;
-    font-weight: 800;
+    font-size: 1.1rem;
+    font-weight: 600;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    white-space: nowrap;
 }
 
 /* Glass Panel Utility */
@@ -180,34 +181,37 @@ button:hover {
 #area-tabs {
     display: flex;
     gap: 1rem;
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 0;
     overflow-x: auto;
     align-items: center;
-    border-radius: 16px;
-    /* Slightly smaller radius for bar */
     flex-shrink: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 .tab-item {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1.2rem;
     border-radius: 999px;
-    /* Pill shape */
     cursor: pointer;
     color: var(--text-dim);
     font-weight: 500;
     transition: all 0.2s;
     white-space: nowrap;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1rem;
 }
 
 .tab-item:hover {
     color: var(--text-main);
-    background: rgba(255, 255, 255, 0.05);
 }
 
 .tab-item.active {
     color: white;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--accent-color);
+    background: var(--accent-gradient);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    border-color: transparent;
 }
 
 /* Dashboard Grid */
@@ -393,6 +397,7 @@ input:checked+.slider:before {
 
 .number-input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .unit {
@@ -425,21 +430,21 @@ input:checked+.slider:before {
     }
 
     #app {
-        height: auto;
-        min-height: 100vh;
-        overflow-y: visible;
+        height: 100vh;
+        overflow: hidden;
     }
 
     #main-layout {
         flex-direction: column;
-        overflow: visible;
+        overflow: hidden;
     }
 
     #sidebar {
         width: 100%;
         flex-direction: row;
         overflow-x: auto;
-        padding: 1rem;
+        flex-shrink: 0;
+        padding: 0.8rem;
         /* Hide scrollbar for horizontal swipe */
         scrollbar-width: none;
     }
@@ -453,18 +458,21 @@ input:checked+.slider:before {
     }
 
     .content-area {
-        overflow: visible;
+        overflow: hidden;
+        flex: 1;
     }
 
     header {
-        flex-direction: column;
+        flex-direction: row;
         gap: 1rem;
-        align-items: flex-start;
+        align-items: center;
+        padding: 0.5rem 0;
+        margin-bottom: 0.5rem;
     }
 
     .header-actions {
-        width: 100%;
-        justify-content: space-between;
+        width: auto;
+        justify-content: flex-end;
     }
 
     .glass-panel {

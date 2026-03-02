@@ -14,6 +14,10 @@
 
     // Edit mode
     let editingScheduleId = $state(null); // null = create mode, string = edit mode
+    let showDeleteModal = $state(false);
+    let scheduleToDelete = $state(null);
+    let showEntityDropdown = $state(false);
+    let entitySearchQuery = $state("");
 
     const dayOptions = [
         { value: "daily", label: "매일" },
@@ -44,6 +48,14 @@
             }),
     );
 
+    let filteredEntities = $derived(
+        booleanEntities.filter((e) =>
+            e.displayName
+                .toLowerCase()
+                .includes(entitySearchQuery.toLowerCase()),
+        ),
+    );
+
     // Load schedules on mount
     $effect(() => {
         if (haStore.activeView === "scheduler") {
@@ -66,6 +78,42 @@
         }
     }
 
+    function adjustHour(delta) {
+        timeHour = (timeHour + delta + 24) % 24;
+    }
+
+    function adjustMinute(delta) {
+        if (delta > 0) {
+            // 위로 조절: 현재가 5의 배수가 아니면 다음 5의 배수로, 이미 5의 배수면 +5분
+            if (timeMinute % 5 !== 0) {
+                timeMinute = Math.ceil(timeMinute / 5) * 5;
+            } else {
+                timeMinute += 5;
+            }
+        } else if (delta < 0) {
+            // 아래로 조절: 현재가 5의 배수가 아니면 이전 5의 배수로, 이미 5의 배수면 -5분
+            if (timeMinute % 5 !== 0) {
+                timeMinute = Math.floor(timeMinute / 5) * 5;
+            } else {
+                timeMinute -= 5;
+            }
+        }
+
+        // 순환 로직 (Wrapping)
+        if (timeMinute >= 60) timeMinute = 0;
+        else if (timeMinute < 0) timeMinute = 55;
+    }
+
+    function validateHour() {
+        if (timeHour === null || isNaN(timeHour)) timeHour = 0;
+        timeHour = Math.max(0, Math.min(23, Math.round(timeHour)));
+    }
+
+    function validateMinute() {
+        if (timeMinute === null || isNaN(timeMinute)) timeMinute = 0;
+        timeMinute = Math.max(0, Math.min(59, Math.round(timeMinute)));
+    }
+
     function resetForm() {
         editingScheduleId = null;
         selectedEntity = "";
@@ -75,6 +123,8 @@
         scheduleName = "";
         selectedDays = ["daily"];
         showModal = false;
+        showEntityDropdown = false;
+        entitySearchQuery = "";
     }
 
     function startAdd() {
@@ -103,6 +153,7 @@
                 ? "turn_on"
                 : "turn_off";
         }
+        showEntityDropdown = false;
         showModal = true;
     }
 
@@ -150,11 +201,18 @@
         isSubmitting = false;
     }
 
-    async function handleDelete(scheduleId) {
-        if (!confirm("정말 이 스케줄을 삭제하시겠습니까?")) return;
+    function confirmDelete(scheduleId) {
+        scheduleToDelete = scheduleId;
+        showDeleteModal = true;
+    }
+
+    async function handleDelete() {
+        if (!scheduleToDelete) return;
         try {
-            await haStore.deleteSchedule(scheduleId);
-            if (editingScheduleId === scheduleId) resetForm();
+            await haStore.deleteSchedule(scheduleToDelete);
+            if (editingScheduleId === scheduleToDelete) resetForm();
+            showDeleteModal = false;
+            scheduleToDelete = null;
         } catch (err) {
             console.error("Failed to delete schedule:", err);
         }
@@ -327,7 +385,7 @@
                                     <button
                                         class="icon-btn delete-btn"
                                         onclick={() =>
-                                            handleDelete(schedule.schedule_id)}
+                                            confirmDelete(schedule.schedule_id)}
                                         type="button"
                                         title="삭제">🗑️</button
                                     >
@@ -344,8 +402,13 @@
     {#if showModal}
         <div
             class="modal-backdrop"
-            onclick={(e) => e.target === e.currentTarget && resetForm()}
-            aria-hidden="true"
+            onkeydown={(e) =>
+                (e.key === "Escape" || e.key === "Enter") &&
+                e.target === e.currentTarget &&
+                resetForm()}
+            role="button"
+            tabindex="-1"
+            aria-label="모달 닫기"
         >
             <div
                 class="modal-content glass-panel"
@@ -360,19 +423,85 @@
 
                 <div class="modal-body">
                     <div class="form-row">
-                        <label for="entity-select">기기 선택</label>
-                        <select
-                            id="entity-select"
-                            bind:value={selectedEntity}
-                            class="form-select"
-                        >
-                            <option value="">-- 선택하세요 --</option>
-                            {#each booleanEntities as entity}
-                                <option value={entity.entity_id}>
-                                    {entity.displayName}
-                                </option>
-                            {/each}
-                        </select>
+                        {#if editingScheduleId}
+                            <div
+                                class="static-entity-name glass-panel edit-mode-name"
+                            >
+                                {getEntityDisplayName(selectedEntity)}
+                            </div>
+                        {:else}
+                            <label for="entity-select">기기 선택</label>
+                            <div class="custom-combobox-container">
+                                <button
+                                    class="combobox-trigger {selectedEntity
+                                        ? 'has-value'
+                                        : ''}"
+                                    onclick={() =>
+                                        (showEntityDropdown =
+                                            !showEntityDropdown)}
+                                    type="button"
+                                >
+                                    <span>
+                                        {selectedEntity
+                                            ? getEntityDisplayName(
+                                                  selectedEntity,
+                                              )
+                                            : "-- 기기를 선택하세요 --"}
+                                    </span>
+                                    <span
+                                        class="arrow"
+                                        class:open={showEntityDropdown}>▼</span
+                                    >
+                                </button>
+
+                                {#if showEntityDropdown}
+                                    <div
+                                        class="combobox-dropdown glass-panel"
+                                        transition:fade={{ duration: 100 }}
+                                    >
+                                        <div class="dropdown-search">
+                                            <input
+                                                type="text"
+                                                placeholder="기기 검색..."
+                                                bind:value={entitySearchQuery}
+                                                onclick={(e) =>
+                                                    e.stopPropagation()}
+                                            />
+                                        </div>
+                                        <div class="dropdown-list">
+                                            {#if filteredEntities.length === 0}
+                                                <div class="no-results">
+                                                    검색 결과가 없습니다.
+                                                </div>
+                                            {:else}
+                                                {#each filteredEntities as entity}
+                                                    <button
+                                                        class="dropdown-item"
+                                                        class:selected={selectedEntity ===
+                                                            entity.entity_id}
+                                                        onclick={() => {
+                                                            selectedEntity =
+                                                                entity.entity_id;
+                                                            showEntityDropdown = false;
+                                                            entitySearchQuery =
+                                                                "";
+                                                        }}
+                                                        type="button"
+                                                    >
+                                                        {entity.displayName}
+                                                        {#if selectedEntity === entity.entity_id}
+                                                            <span class="check"
+                                                                >✓</span
+                                                            >
+                                                        {/if}
+                                                    </button>
+                                                {/each}
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
                     </div>
 
                     <div class="form-row">
@@ -396,24 +525,52 @@
                     </div>
 
                     <div class="form-row">
-                        <label for="time-hour">시간</label>
-                        <div class="time-picker">
-                            <input
-                                id="time-hour"
-                                type="number"
-                                min="0"
-                                max="23"
-                                bind:value={timeHour}
-                                class="time-input"
-                            />
-                            <span class="time-sep">:</span>
-                            <input
-                                type="number"
-                                min="0"
-                                max="59"
-                                bind:value={timeMinute}
-                                class="time-input"
-                            />
+                        <label for="time-hour">시간 설정</label>
+                        <div class="time-picker-container">
+                            <div class="time-spinner">
+                                <button
+                                    type="button"
+                                    class="spinner-arrow"
+                                    onclick={() => adjustHour(1)}>▲</button
+                                >
+                                <input
+                                    id="time-hour"
+                                    type="number"
+                                    min="0"
+                                    max="23"
+                                    bind:value={timeHour}
+                                    onblur={validateHour}
+                                    class="spinner-input"
+                                />
+                                <button
+                                    type="button"
+                                    class="spinner-arrow"
+                                    onclick={() => adjustHour(-1)}>▼</button
+                                >
+                            </div>
+
+                            <span class="time-separator">:</span>
+
+                            <div class="time-spinner">
+                                <button
+                                    type="button"
+                                    class="spinner-arrow"
+                                    onclick={() => adjustMinute(5)}>▲</button
+                                >
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="59"
+                                    bind:value={timeMinute}
+                                    onblur={validateMinute}
+                                    class="spinner-input"
+                                />
+                                <button
+                                    type="button"
+                                    class="spinner-arrow"
+                                    onclick={() => adjustMinute(-5)}>▼</button
+                                >
+                            </div>
                         </div>
                     </div>
 
@@ -465,6 +622,41 @@
                               ? "저장하기"
                               : "추가하기"}
                     </button>
+                </div>
+            </div>
+        </div>
+    {/if}
+
+    <!-- Delete Confirmation Modal -->
+    {#if showDeleteModal}
+        <div
+            class="modal-backdrop delete-backdrop"
+            onkeydown={(e) =>
+                (e.key === "Escape" || e.key === "Enter") &&
+                (showDeleteModal = false)}
+            role="button"
+            tabindex="-1"
+            aria-label="삭제 확인 모달 닫기"
+        >
+            <div
+                class="modal-content delete-modal glass-panel"
+                transition:fade={{ duration: 150 }}
+                onclick={(e) => e.stopPropagation()}
+            >
+                <div class="delete-icon">⚠️</div>
+                <h3 class="delete-title">스케줄 삭제</h3>
+                <p class="delete-msg">
+                    정말 이 스케줄을 삭제하시겠습니까?<br />
+                    삭제된 데이터는 복구할 수 없습니다.
+                </p>
+                <div class="delete-actions">
+                    <button
+                        class="cancel-btn"
+                        onclick={() => (showDeleteModal = false)}>취소</button
+                    >
+                    <button class="confirm-delete-btn" onclick={handleDelete}
+                        >삭제하기</button
+                    >
                 </div>
             </div>
         </div>
@@ -799,6 +991,214 @@
         transition: all 0.2s;
     }
 
+    /* --- Custom UI Improvements --- */
+    .static-entity-name {
+        padding: 12px 18px !important;
+        background: rgba(139, 92, 246, 0.1) !important;
+        border-color: rgba(139, 92, 246, 0.3) !important;
+        color: var(--accent-color, #8b5cf6);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .edit-mode-name {
+        font-size: 1.1rem;
+        padding: 16px !important;
+        margin-top: 10px;
+    }
+
+    /* Delete Modal Specifics */
+    .delete-modal {
+        max-width: 360px;
+        text-align: center;
+        padding: 30px !important;
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .delete-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .delete-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #f8fafc;
+        margin-bottom: 0.8rem;
+    }
+
+    .delete-msg {
+        color: var(--text-dim, #94a3b8);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 2rem;
+    }
+
+    .delete-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .delete-actions button {
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .delete-actions .cancel-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .delete-actions .confirm-delete-btn {
+        background: #ef4444;
+        border: none;
+        color: white;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    }
+
+    .delete-actions .confirm-delete-btn:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+    }
+
+    /* --- Custom Combobox --- */
+    .custom-combobox-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .combobox-trigger {
+        width: 100%;
+        padding: 12px 18px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        color: var(--text-dim, #94a3b8);
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .combobox-trigger.has-value {
+        color: var(--text-main, #f8fafc);
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .combobox-trigger:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--accent-color);
+    }
+
+    .combobox-trigger .arrow {
+        font-size: 0.7rem;
+        transition: transform 0.2s;
+        opacity: 0.5;
+    }
+
+    .combobox-trigger .arrow.open {
+        transform: rotate(180deg);
+    }
+
+    .combobox-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 100%;
+        z-index: 10001;
+        padding: 12px !important;
+        background: rgba(15, 23, 42, 0.98) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 250px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .dropdown-search input {
+        width: 100%;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: white;
+        font-size: 0.85rem;
+        outline: none;
+    }
+
+    .dropdown-search input:focus {
+        border-color: var(--accent-color);
+    }
+
+    .dropdown-list {
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding-right: 4px;
+    }
+
+    .dropdown-list::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .dropdown-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+    }
+
+    .dropdown-item {
+        width: 100%;
+        padding: 10px 14px;
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-dim, #94a3b8);
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background: rgba(139, 92, 246, 0.15);
+        color: white;
+    }
+
+    .dropdown-item.selected {
+        background: rgba(139, 92, 246, 0.2);
+        color: var(--accent-color, #8b5cf6);
+        font-weight: 700;
+    }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: var(--text-dim);
+        font-size: 0.85rem;
+    }
+
+    .check {
+        font-weight: bold;
+    }
+
     .modal-cancel-btn:hover {
         background: rgba(255, 255, 255, 0.1);
     }
@@ -841,39 +1241,7 @@
         font-weight: 600;
     }
 
-    .form-select {
-        padding: 12px 16px;
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 12px;
-        color: #f8fafc;
-        font-size: 0.95rem;
-        outline: none;
-        width: 100%;
-        transition: all 0.2s;
-        cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='Length19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 12px center;
-        background-size: 16px;
-    }
-
-    .form-select:hover {
-        background-color: rgba(15, 23, 42, 0.8);
-        border-color: rgba(139, 92, 246, 0.4);
-    }
-
-    .form-select:focus {
-        border-color: #8b5cf6;
-        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-    }
-
-    .form-select option {
-        background: #1e293b;
-        color: #f8fafc;
-        padding: 12px;
-    }
+    /* Removed unused .form-select styles */
 
     .action-toggle {
         display: flex;
@@ -906,23 +1274,78 @@
         box-shadow: 0 0 15px rgba(239, 68, 68, 0.1);
     }
 
-    .time-picker {
+    /* Time Picker Spinner */
+    .time-picker-container {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        justify-content: center;
+        gap: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 15px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .time-input {
+    .time-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .spinner-arrow {
+        background: transparent;
+        border: none;
+        color: var(--text-dim, #94a3b8);
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 5px 15px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        line-height: 1;
+    }
+
+    .spinner-arrow:hover {
+        color: var(--accent-color, #8b5cf6);
+        background: rgba(139, 92, 246, 0.1);
+    }
+
+    .spinner-arrow:active {
+        transform: scale(0.9);
+    }
+
+    .spinner-input {
         width: 70px;
-        padding: 12px;
-        text-align: center;
-        background: rgba(0, 0, 0, 0.25);
+        background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        color: var(--text-main, #f8fafc);
-        font-size: 1.4rem;
+        border-radius: 10px;
+        color: var(--text-color, #fff);
+        font-size: 1.8rem;
         font-weight: 700;
+        text-align: center;
+        padding: 5px 0;
         outline: none;
+        transition: all 0.2s;
+    }
+
+    .spinner-input:focus {
+        background: rgba(139, 92, 246, 0.15);
+        border-color: var(--accent-color, #8b5cf6);
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Remove number input arrows */
+    .spinner-input::-webkit-inner-spin-button,
+    .spinner-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .time-separator {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-dim, #94a3b8);
+        margin-bottom: 2px;
     }
 
     .day-picker {

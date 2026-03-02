@@ -245,12 +245,7 @@
 
 <div id="app">
     <header>
-        <h1>
-            HA Dashboard <span
-                style="color: yellow; font-size: 0.5em; vertical-align: middle; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 8px; -webkit-text-fill-color: initial;"
-                >[TEST V15]</span
-            >
-        </h1>
+        <h1>스마트팜</h1>
         <div class="header-actions">
             {#if haStore.connectionStatus === "connected"}
                 <div class="desktop-only">

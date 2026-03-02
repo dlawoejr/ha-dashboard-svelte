@@ -1,3 +1,5 @@
+import { base } from '$app/paths';
+
 export const prerender = import.meta.env.VITE_BUILD_TARGET === 'static' ? true : false;
 
 export async function GET({ url }) {
@@ -25,7 +27,7 @@ export async function GET({ url }) {
     const manifest = {
         "name": "Home Assistant Dashboard",
         "short_name": appName,
-        "start_url": "/?source=pwa",
+        "start_url": `${base || ''}/index.html?source=pwa`,
         "display": "standalone",
         "background_color": "#0f172a",
         "theme_color": "#0f172a",

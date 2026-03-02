@@ -8,7 +8,7 @@
     );
 </script>
 
-<nav id="area-tabs" class="glass-panel">
+<nav id="area-tabs">
     {#if floorAreas.length === 0}
         <div class="tab-item">No Areas</div>
     {:else}
