@@ -245,14 +245,17 @@
 
 <div id="app">
     <header>
-        <h1>스마트팜</h1>
+        <div class="brand-container">
+            <h1 class="logo">스마트팜</h1>
+            <span class="brand-tag">Premium Control</span>
+        </div>
         <div class="header-actions">
             {#if haStore.connectionStatus === "connected"}
                 <div class="desktop-only">
                     <QRConnect />
                 </div>
             {/if}
-            <div class="status-badge">
+            <div class="status-badge glass-panel">
                 <span
                     class="status-indicator"
                     class:connected={haStore.connectionStatus === "connected"}
@@ -261,11 +264,13 @@
                 ></span>
                 <span id="conn-status">
                     {#if haStore.connectionStatus === "connected"}
-                        Connected
+                        시스템 정상
                     {:else if haStore.connectionStatus === "error" || haStore.connectionStatus === "auth_failed"}
-                        Auth Failed
+                        인증 실패
+                    {:else if haStore.connectionStatus === "reconnecting"}
+                        재연결 중...
                     {:else}
-                        Disconnected
+                        연결 끊김
                     {/if}
                 </span>
             </div>
@@ -275,46 +280,44 @@
     {#if isInitializing || haStore.connectionStatus === "reconnect_failed"}
         <div
             class="loading-screen glass-panel"
-            style="margin: 2rem auto; max-width: 400px; text-align: center; padding: 2rem;"
+            style="margin: 4rem auto; max-width: 420px; text-align: center; padding: 3rem;"
         >
             {#if haStore.connectionStatus === "reconnect_failed"}
-                <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-                <h2 style="color: var(--text-color); margin-bottom: 0.5rem;">
-                    Connection Lost
-                </h2>
-                <p style="color: var(--text-dim); margin-bottom: 2rem;">
-                    Unable to reach Home Assistant after 5 minutes.<br />Please
-                    check your network.
+                <div class="error-icon">⚠️</div>
+                <h2 class="error-title">연결 실패</h2>
+                <p class="error-msg">
+                    서버에 응답이 없습니다. 네트워크 상태를 확인해 주세요.
                 </p>
                 <button
-                    class="btn primary"
-                    style="width: 100%; margin-bottom: 1rem;"
+                    class="retry-btn"
                     onclick={() => {
                         isInitializing = true;
                         haStore.reconnect();
                     }}
                 >
-                    Retry Connection
+                    다시 시도
                 </button>
             {:else}
-                <div class="spinner"></div>
-                <p style="margin-top: 1rem; color: var(--text-dim);">
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <div class="loading-glow"></div>
+                </div>
+                <p class="loading-msg">
                     {haStore.connectionStatus === "reconnecting"
-                        ? "Reconnecting to Home Assistant..."
-                        : "Connecting to Home Assistant..."}
+                        ? "서버에 다시 연결하는 중..."
+                        : "스마트팜 시스템 로딩 중..."}
                 </p>
             {/if}
 
             <button
-                class="btn secondary"
-                style="margin-top: 1rem; width: 100%;"
+                class="cancel-btn-loading"
                 onclick={() => {
                     haStore.cancelReconnect();
                     isInitializing = false;
                     isRecovering = false;
                 }}
             >
-                Cancel / Change Server
+                취소 및 서버 변경
             </button>
         </div>
     {:else if haStore.connectionStatus !== "connected" && haStore.entities.length === 0}

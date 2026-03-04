@@ -414,6 +414,8 @@
                 class="modal-content glass-panel"
                 transition:fade={{ duration: 200 }}
                 onclick={(e) => e.stopPropagation()}
+                onkeydown={(e) => e.stopPropagation()}
+                role="presentation"
             >
                 <div class="modal-header">
                     <h3 class="modal-title">
@@ -642,6 +644,8 @@
                 class="modal-content delete-modal glass-panel"
                 transition:fade={{ duration: 150 }}
                 onclick={(e) => e.stopPropagation()}
+                onkeydown={(e) => e.stopPropagation()}
+                role="presentation"
             >
                 <div class="delete-icon">⚠️</div>
                 <h3 class="delete-title">스케줄 삭제</h3>
@@ -773,8 +777,10 @@
     }
 
     .schedule-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.1);
+        background: hsla(0, 0%, 100%, 0.08);
+        transform: translateX(4px);
+        border-color: hsla(0, 0%, 100%, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     .schedule-item.disabled {
@@ -805,14 +811,17 @@
     }
 
     .group-header {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--accent-color, #8b5cf6);
-        padding: 4px 8px;
-        background: rgba(139, 92, 246, 0.1);
-        border-radius: 8px;
-        margin-bottom: 2px;
-        border-left: 3px solid #8b5cf6;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--accent-color);
+        padding: 8px 14px;
+        background: hsla(var(--h-accent), var(--s-accent), 60%, 0.1);
+        border-radius: 12px;
+        margin-bottom: 6px;
+        border-left: 4px solid var(--accent-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .paused-badge {

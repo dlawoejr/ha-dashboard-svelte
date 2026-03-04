@@ -4,33 +4,56 @@
 
 <aside id="sidebar" class="glass-panel">
     {#if haStore.floors.length === 0}
-        <div class="sidebar-item">No Floors Configured</div>
+        <div class="sidebar-item no-floors">No Floors Configured</div>
     {:else}
         {#each haStore.floors as floor}
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <div
+            <button
                 class="sidebar-item {floor.floor_id === haStore.activeFloorId &&
                 haStore.activeView === 'dashboard'
                     ? 'active'
                     : ''}"
                 onclick={() => haStore.selectFloor(floor.floor_id)}
+                type="button"
             >
+                <span class="icon">🏢</span>
                 {floor.name}
-            </div>
+            </button>
         {/each}
     {/if}
 
     <!-- Scheduler menu item -->
     <div class="sidebar-divider"></div>
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
+    <button
         class="sidebar-item {haStore.activeView === 'scheduler'
             ? 'active'
             : ''}"
         onclick={() => haStore.setActiveView("scheduler")}
+        type="button"
     >
-        📅 스케줄러
-    </div>
+        <span class="icon">📅</span> 스케줄러
+    </button>
 </aside>
+
+<style>
+    .sidebar-item {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 0.95rem;
+    }
+
+    .icon {
+        font-size: 1.1rem;
+    }
+
+    .no-floors {
+        padding: 1rem;
+        text-align: center;
+        opacity: 0.5;
+    }
+</style>

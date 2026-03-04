@@ -342,4 +342,11 @@ Home Assistant의 `www`(/local/) 폴더나 외부 웹 서버로 SvelteKit 앱을
 | `src/lib/components/LabelGroupCard.svelte` | 슬라이더 하드웨어 보호 로직 (정지 경유) 적용 |
 | `src/routes/+page.svelte` | 브랜딩 명칭 변경 및 헤더 구조 수정 |
 | `src/app.css` | 폰트 스타일 통일, 탭 디자인, 모바일 레이아웃 보정 |
-| `src/lib/components/Tabs.svelte` | 영역 탭 클래스 및 구조 최적화 |
+### [V16] 스마트팜 브랜드 전환 및 프리미엄 UI/UX 고도화
+- **브랜드 전환**: `HA Dashboard`에서 정식 브랜드인 **`스마트팜`**으로 명칭 및 로고(Premium Control) 전면 교체.
+- **디자인 시스템**: HSL 기반 컬러 시스템과 강화된 글래스모피즘(`backdrop-filter`, `hsla` 레이어링) 도입으로 시각적 완성도 향상.
+- **컴포넌트 고도화**: 
+  - `EntityCard`: 마이크로 애니메이션(`scale`, `fade`) 및 슬라이더 트랙 채우기 효과 추가.
+  - `SchedulerCard`: 그룹 헤더 디자인 개선 및 호버 인터랙션 강화.
+- **접근성(a11y)**: 사이드바 및 주요 요소를 `button` 태그로 전환하여 웹 표준 및 조작성 개선.
+- **최적화**: CSS 애니메이션 및 트랜지션 최적화로 모바일 환경에서도 부드러운 UX 확보.
